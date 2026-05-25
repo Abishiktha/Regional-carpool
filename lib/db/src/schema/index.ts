@@ -6,3 +6,4 @@ export * from "./medicalPatients";
 export * from "./medicalDrivers";
 export * from "./recurringAppointments";
 export * from "./medicalTransportRequests";
+export * from "./notifications";

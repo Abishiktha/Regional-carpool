@@ -7,6 +7,7 @@ import medicalPatientsRouter from "./medicalPatients";
 import medicalDriversRouter from "./medicalDrivers";
 import medicalAppointmentsRouter from "./medicalAppointments";
 import medicalTransportRouter from "./medicalTransport";
+import notificationsRouter from "./notifications";
 
 const router: IRouter = Router();
 
@@ -18,5 +19,6 @@ router.use("/medical/patients", medicalPatientsRouter);
 router.use("/medical/drivers", medicalDriversRouter);
 router.use("/medical/appointments", medicalAppointmentsRouter);
 router.use("/medical/transport-requests", medicalTransportRouter);
+router.use("/notifications", notificationsRouter);
 
 export default router;

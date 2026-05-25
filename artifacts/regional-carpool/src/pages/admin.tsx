@@ -20,14 +20,15 @@ import {
   useVerifyMedicalDriver,
   useListMedicalTransportRequests,
   useAssignMedicalDriver,
+  useListNotifications,
   getListMedicalPatientsQueryKey,
   getListMedicalDriversQueryKey,
   getListMedicalTransportRequestsQueryKey,
 } from "@workspace/api-client-react";
-import type { MedicalPatient, MedicalDriver, MedicalTransportRequest } from "@workspace/api-client-react";
+import type { MedicalPatient, MedicalDriver, MedicalTransportRequest, NotificationEntry } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { ShieldCheck, UserCheck, Car, ClipboardList, CheckCircle2, XCircle, MapPin, CalendarDays, Clock, AlertCircle } from "lucide-react";
+import { ShieldCheck, UserCheck, Car, ClipboardList, CheckCircle2, XCircle, MapPin, CalendarDays, Clock, AlertCircle, Bell, ChevronDown, ChevronRight } from "lucide-react";
 
 function verificationBadge(status: string) {
   if (status === "approved") return <Badge className="bg-green-100 text-green-800 border-green-200 border text-xs">Approved</Badge>;
@@ -434,7 +435,7 @@ export default function Admin() {
       </div>
 
       <Tabs defaultValue="patients" className="w-full">
-        <TabsList className="grid grid-cols-3 h-11 p-1 mb-6 w-full sm:w-auto">
+        <TabsList className="grid grid-cols-4 h-11 p-1 mb-6 w-full sm:w-auto">
           <TabsTrigger value="patients" className="text-sm gap-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground" data-testid="admin-tab-patients">
             <UserCheck className="w-4 h-4" />
             Patients
@@ -461,6 +462,10 @@ export default function Admin() {
                 {pendingRequests.length}
               </span>
             )}
+          </TabsTrigger>
+          <TabsTrigger value="messages" className="text-sm gap-1.5 data-[state=active]:bg-slate-700 data-[state=active]:text-white" data-testid="admin-tab-messages">
+            <Bell className="w-4 h-4" />
+            Messages
           </TabsTrigger>
         </TabsList>
 
@@ -535,7 +540,92 @@ export default function Admin() {
             </>
           )}
         </TabsContent>
+        {/* Notifications log tab */}
+        <TabsContent value="messages" className="mt-0 outline-none">
+          <NotificationsPanel />
+        </TabsContent>
       </Tabs>
     </Layout>
+  );
+}
+
+// ── Notifications log panel ────────────────────────────────────────────────
+
+function eventLabel(event: string) {
+  switch (event) {
+    case "patient_approved": return { label: "Patient Approved", color: "bg-green-100 text-green-800 border-green-200" };
+    case "patient_rejected": return { label: "Patient Rejected", color: "bg-red-100 text-red-800 border-red-200" };
+    case "driver_approved": return { label: "Driver Approved", color: "bg-green-100 text-green-800 border-green-200" };
+    case "driver_rejected": return { label: "Driver Rejected", color: "bg-red-100 text-red-800 border-red-200" };
+    case "driver_assigned": return { label: "Driver Assigned", color: "bg-teal-100 text-teal-800 border-teal-200" };
+    default: return { label: event, color: "bg-slate-100 text-slate-700 border-slate-200" };
+  }
+}
+
+function NotificationCard({ n }: { n: NotificationEntry }) {
+  const [open, setOpen] = useState(false);
+  const { label, color } = eventLabel(n.event);
+  const date = new Date(n.createdAt);
+  const dateStr = date.toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" });
+  const timeStr = date.toLocaleTimeString("en-AU", { hour: "2-digit", minute: "2-digit" });
+
+  return (
+    <div className="rounded-xl border bg-card p-4">
+      <div className="flex items-start gap-3">
+        <div className="mt-0.5 rounded-full bg-slate-100 p-2 shrink-0">
+          <Bell className="w-4 h-4 text-slate-500" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex flex-wrap items-center gap-2 mb-1">
+            <Badge className={`${color} border text-xs`}>{label}</Badge>
+            <span className="text-xs text-muted-foreground capitalize">{n.recipientType}</span>
+            <span className="text-xs text-muted-foreground">·</span>
+            <span className="text-xs text-muted-foreground">{n.recipientName}</span>
+            <span className="text-xs text-muted-foreground">·</span>
+            <span className="text-xs text-muted-foreground">{n.recipientPhone}</span>
+          </div>
+          <p className="font-medium text-sm text-foreground">{n.subject}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">{dateStr} at {timeStr}</p>
+        </div>
+        <button
+          onClick={() => setOpen(!open)}
+          className="text-muted-foreground hover:text-foreground transition-colors ml-2 shrink-0"
+          aria-label="Toggle message"
+        >
+          {open ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+        </button>
+      </div>
+      {open && (
+        <div className="mt-3 ml-11 rounded-lg bg-muted p-3">
+          <pre className="text-xs text-foreground whitespace-pre-wrap font-sans leading-relaxed">{n.message}</pre>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function NotificationsPanel() {
+  const { data: notifications, isLoading } = useListNotifications();
+  const sorted = notifications ? [...notifications].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) : [];
+
+  if (isLoading) {
+    return <div className="space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-20 w-full rounded-xl" />)}</div>;
+  }
+
+  if (sorted.length === 0) {
+    return (
+      <div className="rounded-xl border bg-card p-10 text-center text-muted-foreground">
+        <Bell className="w-8 h-8 mx-auto mb-3 opacity-30" />
+        <p className="font-medium">No notifications sent yet</p>
+        <p className="text-sm mt-1">Notifications appear here when you approve or reject a registration, or assign a driver to a transport request.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <p className="text-sm text-muted-foreground">{sorted.length} notification{sorted.length !== 1 ? "s" : ""} logged — newest first</p>
+      {sorted.map(n => <NotificationCard key={n.id} n={n} />)}
+    </div>
   );
 }

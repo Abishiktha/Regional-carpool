@@ -7,6 +7,7 @@ import {
   VerifyMedicalDriverParams,
   VerifyMedicalDriverBody,
 } from "@workspace/api-zod";
+import { notifyDriverApproved, notifyDriverRejected } from "../lib/notifications";
 
 const router = Router();
 
@@ -45,6 +46,13 @@ router.post("/:id/verify", async (req, res) => {
     .where(eq(medicalDriversTable.id, paramsParsed.data.id))
     .returning();
   if (!driver) { res.status(404).json({ error: "Not found" }); return; }
+
+  if (status === "approved") {
+    await notifyDriverApproved({ driverId: driver.id, fullName: driver.fullName, phone: driver.phone });
+  } else if (status === "rejected") {
+    await notifyDriverRejected({ driverId: driver.id, fullName: driver.fullName, phone: driver.phone, rejectionReason: rejectionReason ?? "No reason provided" });
+  }
+
   res.json(fmt(driver));
 });
 

@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { db, medicalTransportRequestsTable, medicalPatientsTable, medicalDriversTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
+import { notifyDriverAssigned } from "../lib/notifications";
 import {
   ListMedicalTransportRequestsQueryParams,
   CreateMedicalTransportRequestBody,
@@ -100,6 +101,27 @@ router.post("/:id/assign", async (req, res) => {
     })
     .where(eq(medicalTransportRequestsTable.id, request.id))
     .returning();
+
+  const [patient] = await db
+    .select()
+    .from(medicalPatientsTable)
+    .where(eq(medicalPatientsTable.id, request.patientId));
+
+  if (patient) {
+    await notifyDriverAssigned({
+      patientId: patient.id,
+      patientName: patient.fullName,
+      patientPhone: patient.phone,
+      driverName: driver.fullName,
+      tripDate: request.tripDate,
+      tripTime: request.tripTime,
+      destinationName: request.destinationName,
+      pickupAddress: request.pickupAddress,
+      pickupSuburb: request.pickupSuburb,
+      returnTrip: request.returnTrip,
+      returnTime: request.returnTime ?? null,
+    });
+  }
 
   res.json(fmt(updated));
 });

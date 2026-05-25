@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useListMedicalTransportRequests } from "@workspace/api-client-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MapPin, Clock, CheckCircle2, UserCheck, Car, ShieldCheck, ClipboardList, ArrowRight, CalendarDays } from "lucide-react";
+import { MapPin, Clock, CheckCircle2, UserCheck, Car, ShieldCheck, ClipboardList, ArrowRight, CalendarDays, Bell } from "lucide-react";
 
 function statusColor(status: string) {
   if (status === "pending") return "bg-amber-100 text-amber-800 border-amber-200";
@@ -75,6 +75,24 @@ export default function MedicalHub() {
             </Button>
           </Link>
         </div>
+      </div>
+
+      <div className="rounded-xl border bg-muted/50 p-4 mb-6 flex flex-col sm:flex-row sm:items-center gap-3">
+        <div className="flex items-start gap-3 flex-1">
+          <div className="mt-0.5 rounded-full bg-slate-100 p-2 shrink-0 border">
+            <Bell className="w-4 h-4 text-slate-500" />
+          </div>
+          <div>
+            <p className="font-semibold text-sm text-foreground">Check your messages</p>
+            <p className="text-xs text-muted-foreground mt-0.5">See updates about your registration approval and transport booking — including when a driver has been assigned to your trip.</p>
+          </div>
+        </div>
+        <Link href="/medical/messages">
+          <Button size="sm" variant="outline" className="shrink-0 w-full sm:w-auto" data-testid="btn-my-messages">
+            <Bell className="w-3.5 h-3.5 mr-1.5" />
+            My Messages
+          </Button>
+        </Link>
       </div>
 
       <div className="mb-4 flex items-center justify-between">

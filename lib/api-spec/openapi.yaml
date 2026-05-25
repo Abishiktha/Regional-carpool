@@ -9,6 +9,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: notifications
+    description: In-app notification log
   - name: carpool-posts
     description: Carpool board - drivers post trips
   - name: ride-requests
@@ -524,6 +526,28 @@ paths:
         "400":
           description: Driver not verified or request already assigned
 
+  /notifications:
+    get:
+      operationId: listNotifications
+      tags: [notifications]
+      summary: List notification log
+      parameters:
+        - name: recipientType
+          in: query
+          schema: { type: string }
+        - name: recipientId
+          in: query
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Notification log entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/NotificationEntry"
+
   /stats:
     get:
       operationId: getStats
@@ -989,4 +1013,29 @@ components:
         status:
           type: string
         rejectionReason:
+          type: string
+
+    NotificationEntry:
+      type: object
+      required: [id, recipientType, recipientId, recipientName, recipientPhone, event, subject, message, status, createdAt]
+      properties:
+        id:
+          type: integer
+        recipientType:
+          type: string
+        recipientId:
+          type: integer
+        recipientName:
+          type: string
+        recipientPhone:
+          type: string
+        event:
+          type: string
+        subject:
+          type: string
+        message:
+          type: string
+        status:
+          type: string
+        createdAt:
           type: string

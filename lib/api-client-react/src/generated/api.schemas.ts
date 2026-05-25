@@ -252,6 +252,19 @@ export interface VerificationInput {
   rejectionReason?: string;
 }
 
+export interface NotificationEntry {
+  id: number;
+  recipientType: string;
+  recipientId: number;
+  recipientName: string;
+  recipientPhone: string;
+  event: string;
+  subject: string;
+  message: string;
+  status: string;
+  createdAt: string;
+}
+
 export type ListCarpoolPostsParams = {
 fromLocation?: string;
 toLocation?: string;
@@ -271,5 +284,10 @@ patientId?: number;
 export type ListMedicalTransportRequestsParams = {
 patientId?: number;
 status?: string;
+};
+
+export type ListNotificationsParams = {
+recipientType?: string;
+recipientId?: number;
 };
 

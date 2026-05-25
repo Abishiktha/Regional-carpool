@@ -7,6 +7,7 @@ import {
   VerifyMedicalPatientParams,
   VerifyMedicalPatientBody,
 } from "@workspace/api-zod";
+import { notifyPatientApproved, notifyPatientRejected } from "../lib/notifications";
 
 const router = Router();
 
@@ -45,6 +46,13 @@ router.post("/:id/verify", async (req, res) => {
     .where(eq(medicalPatientsTable.id, paramsParsed.data.id))
     .returning();
   if (!patient) { res.status(404).json({ error: "Not found" }); return; }
+
+  if (status === "approved") {
+    await notifyPatientApproved({ patientId: patient.id, fullName: patient.fullName, phone: patient.phone, suburb: patient.suburb });
+  } else if (status === "rejected") {
+    await notifyPatientRejected({ patientId: patient.id, fullName: patient.fullName, phone: patient.phone, rejectionReason: rejectionReason ?? "No reason provided" });
+  }
+
   res.json(fmt(patient));
 });
 

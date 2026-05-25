@@ -546,6 +546,29 @@ export const AssignMedicalDriverResponse = zod.object({
 
 
 /**
+ * @summary List notification log
+ */
+export const ListNotificationsQueryParams = zod.object({
+  "recipientType": zod.coerce.string().optional(),
+  "recipientId": zod.coerce.number().optional()
+})
+
+export const ListNotificationsResponseItem = zod.object({
+  "id": zod.number(),
+  "recipientType": zod.string(),
+  "recipientId": zod.number(),
+  "recipientName": zod.string(),
+  "recipientPhone": zod.string(),
+  "event": zod.string(),
+  "subject": zod.string(),
+  "message": zod.string(),
+  "status": zod.string(),
+  "createdAt": zod.string()
+})
+export const ListNotificationsResponse = zod.array(ListNotificationsResponseItem)
+
+
+/**
  * @summary Get summary statistics
  */
 export const GetStatsResponse = zod.object({
