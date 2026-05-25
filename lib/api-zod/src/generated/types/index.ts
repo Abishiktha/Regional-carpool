@@ -6,15 +6,27 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from './assignDriverInput';
 export * from './booking';
 export * from './bookingInput';
 export * from './carpoolPost';
 export * from './carpoolPostInput';
 export * from './healthStatus';
 export * from './listCarpoolPostsParams';
+export * from './listMedicalTransportRequestsParams';
+export * from './listRecurringAppointmentsParams';
 export * from './listRideRequestsParams';
+export * from './medicalDriver';
+export * from './medicalDriverInput';
+export * from './medicalPatient';
+export * from './medicalPatientInput';
+export * from './medicalTransportRequest';
+export * from './medicalTransportRequestInput';
+export * from './recurringAppointment';
+export * from './recurringAppointmentInput';
 export * from './rideAcceptance';
 export * from './rideAcceptanceInput';
 export * from './rideRequest';
 export * from './rideRequestInput';
 export * from './stats';
+export * from './verificationInput';

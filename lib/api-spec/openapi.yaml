@@ -15,6 +15,14 @@ tags:
     description: Ride request board - passengers post requests
   - name: stats
     description: Summary statistics
+  - name: medical-patients
+    description: Medical transport patient registration
+  - name: medical-drivers
+    description: Medical transport driver registration
+  - name: medical-appointments
+    description: Recurring medical appointments
+  - name: medical-transport
+    description: Medical transport requests
 paths:
   /healthz:
     get:
@@ -229,6 +237,293 @@ paths:
         "400":
           description: Already accepted
 
+  /medical/patients:
+    post:
+      operationId: registerMedicalPatient
+      tags: [medical-patients]
+      summary: Register as a medical transport patient
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MedicalPatientInput"
+      responses:
+        "201":
+          description: Registration submitted for verification
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MedicalPatient"
+    get:
+      operationId: listMedicalPatients
+      tags: [medical-patients]
+      summary: List all registered patients
+      responses:
+        "200":
+          description: List of patients
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MedicalPatient"
+
+  /medical/patients/{id}:
+    get:
+      operationId: getMedicalPatient
+      tags: [medical-patients]
+      summary: Get a patient record
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Patient record
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MedicalPatient"
+        "404":
+          description: Not found
+
+  /medical/patients/{id}/verify:
+    post:
+      operationId: verifyMedicalPatient
+      tags: [medical-patients]
+      summary: Approve or reject a patient registration
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerificationInput"
+      responses:
+        "200":
+          description: Verification updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MedicalPatient"
+
+  /medical/drivers:
+    post:
+      operationId: registerMedicalDriver
+      tags: [medical-drivers]
+      summary: Register as a medical transport driver
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MedicalDriverInput"
+      responses:
+        "201":
+          description: Registration submitted for verification
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MedicalDriver"
+    get:
+      operationId: listMedicalDrivers
+      tags: [medical-drivers]
+      summary: List all registered drivers
+      responses:
+        "200":
+          description: List of drivers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MedicalDriver"
+
+  /medical/drivers/{id}:
+    get:
+      operationId: getMedicalDriver
+      tags: [medical-drivers]
+      summary: Get a driver record
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Driver record
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MedicalDriver"
+        "404":
+          description: Not found
+
+  /medical/drivers/{id}/verify:
+    post:
+      operationId: verifyMedicalDriver
+      tags: [medical-drivers]
+      summary: Approve or reject a driver registration
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerificationInput"
+      responses:
+        "200":
+          description: Verification updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MedicalDriver"
+
+  /medical/appointments:
+    get:
+      operationId: listRecurringAppointments
+      tags: [medical-appointments]
+      summary: List recurring appointments (optionally filter by patientId)
+      parameters:
+        - name: patientId
+          in: query
+          schema: { type: integer }
+      responses:
+        "200":
+          description: List of appointments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RecurringAppointment"
+    post:
+      operationId: createRecurringAppointment
+      tags: [medical-appointments]
+      summary: Create a recurring appointment for a patient
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecurringAppointmentInput"
+      responses:
+        "201":
+          description: Appointment created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecurringAppointment"
+
+  /medical/appointments/{id}:
+    delete:
+      operationId: deleteRecurringAppointment
+      tags: [medical-appointments]
+      summary: Deactivate a recurring appointment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "204":
+          description: Deactivated
+
+  /medical/transport-requests:
+    get:
+      operationId: listMedicalTransportRequests
+      tags: [medical-transport]
+      summary: List all medical transport requests
+      parameters:
+        - name: patientId
+          in: query
+          schema: { type: integer }
+        - name: status
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: List of transport requests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MedicalTransportRequest"
+    post:
+      operationId: createMedicalTransportRequest
+      tags: [medical-transport]
+      summary: Request medical transport
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MedicalTransportRequestInput"
+      responses:
+        "201":
+          description: Transport request created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MedicalTransportRequest"
+
+  /medical/transport-requests/{id}:
+    get:
+      operationId: getMedicalTransportRequest
+      tags: [medical-transport]
+      summary: Get a transport request
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Transport request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MedicalTransportRequest"
+        "404":
+          description: Not found
+
+  /medical/transport-requests/{id}/assign:
+    post:
+      operationId: assignMedicalDriver
+      tags: [medical-transport]
+      summary: Assign a verified driver to a transport request
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssignDriverInput"
+      responses:
+        "200":
+          description: Driver assigned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MedicalTransportRequest"
+        "400":
+          description: Driver not verified or request already assigned
+
   /stats:
     get:
       operationId: getStats
@@ -429,5 +724,269 @@ components:
           type: integer
         totalAcceptances:
           type: integer
-        seatsAvailable:
+
+    MedicalPatient:
+      type: object
+      required: [id, fullName, dateOfBirth, phone, address, suburb, state, postcode, medicareNumber, gpName, gpPhone, emergencyContactName, emergencyContactPhone, mobilityNeeds, verificationStatus, createdAt]
+      properties:
+        id:
           type: integer
+        fullName:
+          type: string
+        dateOfBirth:
+          type: string
+        phone:
+          type: string
+        address:
+          type: string
+        suburb:
+          type: string
+        state:
+          type: string
+        postcode:
+          type: string
+        medicareNumber:
+          type: string
+        gpName:
+          type: string
+        gpPhone:
+          type: string
+        emergencyContactName:
+          type: string
+        emergencyContactPhone:
+          type: string
+        mobilityNeeds:
+          type: string
+        notes:
+          type: ["string", "null"]
+        verificationStatus:
+          type: string
+        createdAt:
+          type: string
+
+    MedicalPatientInput:
+      type: object
+      required: [fullName, dateOfBirth, phone, address, suburb, state, postcode, medicareNumber, gpName, gpPhone, emergencyContactName, emergencyContactPhone, mobilityNeeds]
+      properties:
+        fullName:
+          type: string
+        dateOfBirth:
+          type: string
+        phone:
+          type: string
+        address:
+          type: string
+        suburb:
+          type: string
+        state:
+          type: string
+        postcode:
+          type: string
+        medicareNumber:
+          type: string
+        gpName:
+          type: string
+        gpPhone:
+          type: string
+        emergencyContactName:
+          type: string
+        emergencyContactPhone:
+          type: string
+        mobilityNeeds:
+          type: string
+        notes:
+          type: string
+
+    MedicalDriver:
+      type: object
+      required: [id, fullName, phone, licenseNumber, vehicleType, vehicleRego, vehicleCapacity, hasWheelchairAccess, workingWithChildrenCheck, policeCheckDone, verificationStatus, createdAt]
+      properties:
+        id:
+          type: integer
+        fullName:
+          type: string
+        phone:
+          type: string
+        licenseNumber:
+          type: string
+        vehicleType:
+          type: string
+        vehicleRego:
+          type: string
+        vehicleCapacity:
+          type: integer
+        hasWheelchairAccess:
+          type: boolean
+        workingWithChildrenCheck:
+          type: boolean
+        policeCheckDone:
+          type: boolean
+        verificationStatus:
+          type: string
+        notes:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    MedicalDriverInput:
+      type: object
+      required: [fullName, phone, licenseNumber, vehicleType, vehicleRego, vehicleCapacity, hasWheelchairAccess, workingWithChildrenCheck, policeCheckDone]
+      properties:
+        fullName:
+          type: string
+        phone:
+          type: string
+        licenseNumber:
+          type: string
+        vehicleType:
+          type: string
+        vehicleRego:
+          type: string
+        vehicleCapacity:
+          type: integer
+        hasWheelchairAccess:
+          type: boolean
+        workingWithChildrenCheck:
+          type: boolean
+        policeCheckDone:
+          type: boolean
+        notes:
+          type: string
+
+    RecurringAppointment:
+      type: object
+      required: [id, patientId, clinicName, clinicAddress, clinicSuburb, appointmentType, dayOfWeek, appointmentTime, frequencyWeeks, nextDate, active, createdAt]
+      properties:
+        id:
+          type: integer
+        patientId:
+          type: integer
+        clinicName:
+          type: string
+        clinicAddress:
+          type: string
+        clinicSuburb:
+          type: string
+        appointmentType:
+          type: string
+        dayOfWeek:
+          type: string
+        appointmentTime:
+          type: string
+        frequencyWeeks:
+          type: integer
+        nextDate:
+          type: string
+        active:
+          type: boolean
+        notes:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    RecurringAppointmentInput:
+      type: object
+      required: [patientId, clinicName, clinicAddress, clinicSuburb, appointmentType, dayOfWeek, appointmentTime, frequencyWeeks, nextDate]
+      properties:
+        patientId:
+          type: integer
+        clinicName:
+          type: string
+        clinicAddress:
+          type: string
+        clinicSuburb:
+          type: string
+        appointmentType:
+          type: string
+        dayOfWeek:
+          type: string
+        appointmentTime:
+          type: string
+        frequencyWeeks:
+          type: integer
+        nextDate:
+          type: string
+        notes:
+          type: string
+
+    MedicalTransportRequest:
+      type: object
+      required: [id, patientId, patientName, appointmentId, pickupAddress, pickupSuburb, destinationName, destinationAddress, tripDate, tripTime, status, createdAt]
+      properties:
+        id:
+          type: integer
+        patientId:
+          type: integer
+        patientName:
+          type: string
+        appointmentId:
+          type: ["integer", "null"]
+        pickupAddress:
+          type: string
+        pickupSuburb:
+          type: string
+        destinationName:
+          type: string
+        destinationAddress:
+          type: string
+        tripDate:
+          type: string
+        tripTime:
+          type: string
+        returnTrip:
+          type: boolean
+        returnTime:
+          type: ["string", "null"]
+        assignedDriverId:
+          type: ["integer", "null"]
+        assignedDriverName:
+          type: ["string", "null"]
+        status:
+          type: string
+        notes:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    MedicalTransportRequestInput:
+      type: object
+      required: [patientId, pickupAddress, pickupSuburb, destinationName, destinationAddress, tripDate, tripTime, returnTrip]
+      properties:
+        patientId:
+          type: integer
+        appointmentId:
+          type: integer
+        pickupAddress:
+          type: string
+        pickupSuburb:
+          type: string
+        destinationName:
+          type: string
+        destinationAddress:
+          type: string
+        tripDate:
+          type: string
+        tripTime:
+          type: string
+        returnTrip:
+          type: boolean
+        returnTime:
+          type: string
+        notes:
+          type: string
+
+    AssignDriverInput:
+      type: object
+      required: [driverId]
+      properties:
+        driverId:
+          type: integer
+
+    VerificationInput:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+        rejectionReason:
+          type: string

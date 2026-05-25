@@ -104,7 +104,152 @@ export interface Stats {
   activeRideRequests: number;
   totalBookings: number;
   totalAcceptances: number;
-  seatsAvailable: number;
+}
+
+export interface MedicalPatient {
+  id: number;
+  fullName: string;
+  dateOfBirth: string;
+  phone: string;
+  address: string;
+  suburb: string;
+  state: string;
+  postcode: string;
+  medicareNumber: string;
+  gpName: string;
+  gpPhone: string;
+  emergencyContactName: string;
+  emergencyContactPhone: string;
+  mobilityNeeds: string;
+  /** @nullable */
+  notes?: string | null;
+  verificationStatus: string;
+  createdAt: string;
+}
+
+export interface MedicalPatientInput {
+  fullName: string;
+  dateOfBirth: string;
+  phone: string;
+  address: string;
+  suburb: string;
+  state: string;
+  postcode: string;
+  medicareNumber: string;
+  gpName: string;
+  gpPhone: string;
+  emergencyContactName: string;
+  emergencyContactPhone: string;
+  mobilityNeeds: string;
+  notes?: string;
+}
+
+export interface MedicalDriver {
+  id: number;
+  fullName: string;
+  phone: string;
+  licenseNumber: string;
+  vehicleType: string;
+  vehicleRego: string;
+  vehicleCapacity: number;
+  hasWheelchairAccess: boolean;
+  workingWithChildrenCheck: boolean;
+  policeCheckDone: boolean;
+  verificationStatus: string;
+  /** @nullable */
+  notes?: string | null;
+  createdAt: string;
+}
+
+export interface MedicalDriverInput {
+  fullName: string;
+  phone: string;
+  licenseNumber: string;
+  vehicleType: string;
+  vehicleRego: string;
+  vehicleCapacity: number;
+  hasWheelchairAccess: boolean;
+  workingWithChildrenCheck: boolean;
+  policeCheckDone: boolean;
+  notes?: string;
+}
+
+export interface RecurringAppointment {
+  id: number;
+  patientId: number;
+  clinicName: string;
+  clinicAddress: string;
+  clinicSuburb: string;
+  appointmentType: string;
+  dayOfWeek: string;
+  appointmentTime: string;
+  frequencyWeeks: number;
+  nextDate: string;
+  active: boolean;
+  /** @nullable */
+  notes?: string | null;
+  createdAt: string;
+}
+
+export interface RecurringAppointmentInput {
+  patientId: number;
+  clinicName: string;
+  clinicAddress: string;
+  clinicSuburb: string;
+  appointmentType: string;
+  dayOfWeek: string;
+  appointmentTime: string;
+  frequencyWeeks: number;
+  nextDate: string;
+  notes?: string;
+}
+
+export interface MedicalTransportRequest {
+  id: number;
+  patientId: number;
+  patientName: string;
+  /** @nullable */
+  appointmentId: number | null;
+  pickupAddress: string;
+  pickupSuburb: string;
+  destinationName: string;
+  destinationAddress: string;
+  tripDate: string;
+  tripTime: string;
+  returnTrip?: boolean;
+  /** @nullable */
+  returnTime?: string | null;
+  /** @nullable */
+  assignedDriverId?: number | null;
+  /** @nullable */
+  assignedDriverName?: string | null;
+  status: string;
+  /** @nullable */
+  notes?: string | null;
+  createdAt: string;
+}
+
+export interface MedicalTransportRequestInput {
+  patientId: number;
+  appointmentId?: number;
+  pickupAddress: string;
+  pickupSuburb: string;
+  destinationName: string;
+  destinationAddress: string;
+  tripDate: string;
+  tripTime: string;
+  returnTrip: boolean;
+  returnTime?: string;
+  notes?: string;
+}
+
+export interface AssignDriverInput {
+  driverId: number;
+}
+
+export interface VerificationInput {
+  status: string;
+  rejectionReason?: string;
 }
 
 export type ListCarpoolPostsParams = {
@@ -117,5 +262,14 @@ export type ListRideRequestsParams = {
 fromLocation?: string;
 toLocation?: string;
 date?: string;
+};
+
+export type ListRecurringAppointmentsParams = {
+patientId?: number;
+};
+
+export type ListMedicalTransportRequestsParams = {
+patientId?: number;
+status?: string;
 };
 

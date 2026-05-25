@@ -6,12 +6,16 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import NewCarpoolPost from "@/pages/new-carpool-post";
 import NewRideRequest from "@/pages/new-ride-request";
+import MedicalHub from "@/pages/medical-hub";
+import MedicalPatientRegister from "@/pages/medical-patient-register";
+import MedicalDriverRegister from "@/pages/medical-driver-register";
+import NewMedicalTransport from "@/pages/new-medical-transport";
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       refetchOnWindowFocus: false,
-      staleTime: 1000 * 60 * 5, // 5 mins
+      staleTime: 1000 * 60 * 5,
     },
   },
 });
@@ -22,6 +26,10 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/carpool-posts/new" component={NewCarpoolPost} />
       <Route path="/ride-requests/new" component={NewRideRequest} />
+      <Route path="/medical" component={MedicalHub} />
+      <Route path="/medical/register/patient" component={MedicalPatientRegister} />
+      <Route path="/medical/register/driver" component={MedicalDriverRegister} />
+      <Route path="/medical/transport/new" component={NewMedicalTransport} />
       <Route component={NotFound} />
     </Switch>
   );

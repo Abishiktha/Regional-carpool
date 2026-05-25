@@ -1,6 +1,10 @@
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
+import { HeartPulse } from "lucide-react";
 
 export function Layout({ children }: { children: React.ReactNode }) {
+  const [location] = useLocation();
+  const isMedical = location.startsWith("/medical");
+
   return (
     <div className="min-h-[100dvh] flex flex-col bg-background">
       <header className="border-b bg-card">
@@ -13,9 +17,21 @@ export function Layout({ children }: { children: React.ReactNode }) {
               Regional Carpool
             </span>
           </Link>
-          <nav className="flex items-center gap-4">
-            <Link href="/" className="text-sm font-medium hover:text-primary transition-colors">
+          <nav className="flex items-center gap-1">
+            <Link
+              href="/"
+              className={`text-sm font-medium px-3 py-1.5 rounded-md transition-colors ${!isMedical ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
+              data-testid="nav-board"
+            >
               Board
+            </Link>
+            <Link
+              href="/medical"
+              className={`text-sm font-medium px-3 py-1.5 rounded-md transition-colors flex items-center gap-1.5 ${isMedical ? "text-teal-700 bg-teal-50" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
+              data-testid="nav-medical"
+            >
+              <HeartPulse className="w-3.5 h-3.5" />
+              Medical Transport
             </Link>
           </nav>
         </div>

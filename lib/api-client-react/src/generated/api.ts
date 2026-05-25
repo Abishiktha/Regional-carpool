@@ -20,18 +20,30 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AssignDriverInput,
   Booking,
   BookingInput,
   CarpoolPost,
   CarpoolPostInput,
   HealthStatus,
   ListCarpoolPostsParams,
+  ListMedicalTransportRequestsParams,
+  ListRecurringAppointmentsParams,
   ListRideRequestsParams,
+  MedicalDriver,
+  MedicalDriverInput,
+  MedicalPatient,
+  MedicalPatientInput,
+  MedicalTransportRequest,
+  MedicalTransportRequestInput,
+  RecurringAppointment,
+  RecurringAppointmentInput,
   RideAcceptance,
   RideAcceptanceInput,
   RideRequest,
   RideRequestInput,
-  Stats
+  Stats,
+  VerificationInput
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -869,6 +881,1129 @@ export const useAcceptRideRequest = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getAcceptRideRequestMutationOptions(options));
+    }
+
+export const getRegisterMedicalPatientUrl = () => {
+
+
+
+
+  return `/api/medical/patients`
+}
+
+/**
+ * @summary Register as a medical transport patient
+ */
+export const registerMedicalPatient = async (medicalPatientInput: MedicalPatientInput, options?: RequestInit): Promise<MedicalPatient> => {
+
+  return customFetch<MedicalPatient>(getRegisterMedicalPatientUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      medicalPatientInput,)
+  }
+);}
+
+
+
+
+export const getRegisterMedicalPatientMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerMedicalPatient>>, TError,{data: BodyType<MedicalPatientInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof registerMedicalPatient>>, TError,{data: BodyType<MedicalPatientInput>}, TContext> => {
+
+const mutationKey = ['registerMedicalPatient'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof registerMedicalPatient>>, {data: BodyType<MedicalPatientInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  registerMedicalPatient(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RegisterMedicalPatientMutationResult = NonNullable<Awaited<ReturnType<typeof registerMedicalPatient>>>
+    export type RegisterMedicalPatientMutationBody = BodyType<MedicalPatientInput>
+    export type RegisterMedicalPatientMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Register as a medical transport patient
+ */
+export const useRegisterMedicalPatient = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerMedicalPatient>>, TError,{data: BodyType<MedicalPatientInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof registerMedicalPatient>>,
+        TError,
+        {data: BodyType<MedicalPatientInput>},
+        TContext
+      > => {
+      return useMutation(getRegisterMedicalPatientMutationOptions(options));
+    }
+
+export const getListMedicalPatientsUrl = () => {
+
+
+
+
+  return `/api/medical/patients`
+}
+
+/**
+ * @summary List all registered patients
+ */
+export const listMedicalPatients = async ( options?: RequestInit): Promise<MedicalPatient[]> => {
+
+  return customFetch<MedicalPatient[]>(getListMedicalPatientsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListMedicalPatientsQueryKey = () => {
+    return [
+    `/api/medical/patients`
+    ] as const;
+    }
+
+
+export const getListMedicalPatientsQueryOptions = <TData = Awaited<ReturnType<typeof listMedicalPatients>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listMedicalPatients>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListMedicalPatientsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listMedicalPatients>>> = ({ signal }) => listMedicalPatients({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listMedicalPatients>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListMedicalPatientsQueryResult = NonNullable<Awaited<ReturnType<typeof listMedicalPatients>>>
+export type ListMedicalPatientsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List all registered patients
+ */
+
+export function useListMedicalPatients<TData = Awaited<ReturnType<typeof listMedicalPatients>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listMedicalPatients>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListMedicalPatientsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getGetMedicalPatientUrl = (id: number,) => {
+
+
+
+
+  return `/api/medical/patients/${id}`
+}
+
+/**
+ * @summary Get a patient record
+ */
+export const getMedicalPatient = async (id: number, options?: RequestInit): Promise<MedicalPatient> => {
+
+  return customFetch<MedicalPatient>(getGetMedicalPatientUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetMedicalPatientQueryKey = (id: number,) => {
+    return [
+    `/api/medical/patients/${id}`
+    ] as const;
+    }
+
+
+export const getGetMedicalPatientQueryOptions = <TData = Awaited<ReturnType<typeof getMedicalPatient>>, TError = ErrorType<void>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMedicalPatient>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMedicalPatientQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMedicalPatient>>> = ({ signal }) => getMedicalPatient(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMedicalPatient>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetMedicalPatientQueryResult = NonNullable<Awaited<ReturnType<typeof getMedicalPatient>>>
+export type GetMedicalPatientQueryError = ErrorType<void>
+
+
+/**
+ * @summary Get a patient record
+ */
+
+export function useGetMedicalPatient<TData = Awaited<ReturnType<typeof getMedicalPatient>>, TError = ErrorType<void>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMedicalPatient>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetMedicalPatientQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getVerifyMedicalPatientUrl = (id: number,) => {
+
+
+
+
+  return `/api/medical/patients/${id}/verify`
+}
+
+/**
+ * @summary Approve or reject a patient registration
+ */
+export const verifyMedicalPatient = async (id: number,
+    verificationInput: VerificationInput, options?: RequestInit): Promise<MedicalPatient> => {
+
+  return customFetch<MedicalPatient>(getVerifyMedicalPatientUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      verificationInput,)
+  }
+);}
+
+
+
+
+export const getVerifyMedicalPatientMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyMedicalPatient>>, TError,{id: number;data: BodyType<VerificationInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof verifyMedicalPatient>>, TError,{id: number;data: BodyType<VerificationInput>}, TContext> => {
+
+const mutationKey = ['verifyMedicalPatient'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof verifyMedicalPatient>>, {id: number;data: BodyType<VerificationInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  verifyMedicalPatient(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type VerifyMedicalPatientMutationResult = NonNullable<Awaited<ReturnType<typeof verifyMedicalPatient>>>
+    export type VerifyMedicalPatientMutationBody = BodyType<VerificationInput>
+    export type VerifyMedicalPatientMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Approve or reject a patient registration
+ */
+export const useVerifyMedicalPatient = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyMedicalPatient>>, TError,{id: number;data: BodyType<VerificationInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof verifyMedicalPatient>>,
+        TError,
+        {id: number;data: BodyType<VerificationInput>},
+        TContext
+      > => {
+      return useMutation(getVerifyMedicalPatientMutationOptions(options));
+    }
+
+export const getRegisterMedicalDriverUrl = () => {
+
+
+
+
+  return `/api/medical/drivers`
+}
+
+/**
+ * @summary Register as a medical transport driver
+ */
+export const registerMedicalDriver = async (medicalDriverInput: MedicalDriverInput, options?: RequestInit): Promise<MedicalDriver> => {
+
+  return customFetch<MedicalDriver>(getRegisterMedicalDriverUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      medicalDriverInput,)
+  }
+);}
+
+
+
+
+export const getRegisterMedicalDriverMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerMedicalDriver>>, TError,{data: BodyType<MedicalDriverInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof registerMedicalDriver>>, TError,{data: BodyType<MedicalDriverInput>}, TContext> => {
+
+const mutationKey = ['registerMedicalDriver'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof registerMedicalDriver>>, {data: BodyType<MedicalDriverInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  registerMedicalDriver(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RegisterMedicalDriverMutationResult = NonNullable<Awaited<ReturnType<typeof registerMedicalDriver>>>
+    export type RegisterMedicalDriverMutationBody = BodyType<MedicalDriverInput>
+    export type RegisterMedicalDriverMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Register as a medical transport driver
+ */
+export const useRegisterMedicalDriver = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerMedicalDriver>>, TError,{data: BodyType<MedicalDriverInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof registerMedicalDriver>>,
+        TError,
+        {data: BodyType<MedicalDriverInput>},
+        TContext
+      > => {
+      return useMutation(getRegisterMedicalDriverMutationOptions(options));
+    }
+
+export const getListMedicalDriversUrl = () => {
+
+
+
+
+  return `/api/medical/drivers`
+}
+
+/**
+ * @summary List all registered drivers
+ */
+export const listMedicalDrivers = async ( options?: RequestInit): Promise<MedicalDriver[]> => {
+
+  return customFetch<MedicalDriver[]>(getListMedicalDriversUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListMedicalDriversQueryKey = () => {
+    return [
+    `/api/medical/drivers`
+    ] as const;
+    }
+
+
+export const getListMedicalDriversQueryOptions = <TData = Awaited<ReturnType<typeof listMedicalDrivers>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listMedicalDrivers>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListMedicalDriversQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listMedicalDrivers>>> = ({ signal }) => listMedicalDrivers({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listMedicalDrivers>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListMedicalDriversQueryResult = NonNullable<Awaited<ReturnType<typeof listMedicalDrivers>>>
+export type ListMedicalDriversQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List all registered drivers
+ */
+
+export function useListMedicalDrivers<TData = Awaited<ReturnType<typeof listMedicalDrivers>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listMedicalDrivers>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListMedicalDriversQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getGetMedicalDriverUrl = (id: number,) => {
+
+
+
+
+  return `/api/medical/drivers/${id}`
+}
+
+/**
+ * @summary Get a driver record
+ */
+export const getMedicalDriver = async (id: number, options?: RequestInit): Promise<MedicalDriver> => {
+
+  return customFetch<MedicalDriver>(getGetMedicalDriverUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetMedicalDriverQueryKey = (id: number,) => {
+    return [
+    `/api/medical/drivers/${id}`
+    ] as const;
+    }
+
+
+export const getGetMedicalDriverQueryOptions = <TData = Awaited<ReturnType<typeof getMedicalDriver>>, TError = ErrorType<void>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMedicalDriver>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMedicalDriverQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMedicalDriver>>> = ({ signal }) => getMedicalDriver(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMedicalDriver>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetMedicalDriverQueryResult = NonNullable<Awaited<ReturnType<typeof getMedicalDriver>>>
+export type GetMedicalDriverQueryError = ErrorType<void>
+
+
+/**
+ * @summary Get a driver record
+ */
+
+export function useGetMedicalDriver<TData = Awaited<ReturnType<typeof getMedicalDriver>>, TError = ErrorType<void>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMedicalDriver>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetMedicalDriverQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getVerifyMedicalDriverUrl = (id: number,) => {
+
+
+
+
+  return `/api/medical/drivers/${id}/verify`
+}
+
+/**
+ * @summary Approve or reject a driver registration
+ */
+export const verifyMedicalDriver = async (id: number,
+    verificationInput: VerificationInput, options?: RequestInit): Promise<MedicalDriver> => {
+
+  return customFetch<MedicalDriver>(getVerifyMedicalDriverUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      verificationInput,)
+  }
+);}
+
+
+
+
+export const getVerifyMedicalDriverMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyMedicalDriver>>, TError,{id: number;data: BodyType<VerificationInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof verifyMedicalDriver>>, TError,{id: number;data: BodyType<VerificationInput>}, TContext> => {
+
+const mutationKey = ['verifyMedicalDriver'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof verifyMedicalDriver>>, {id: number;data: BodyType<VerificationInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  verifyMedicalDriver(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type VerifyMedicalDriverMutationResult = NonNullable<Awaited<ReturnType<typeof verifyMedicalDriver>>>
+    export type VerifyMedicalDriverMutationBody = BodyType<VerificationInput>
+    export type VerifyMedicalDriverMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Approve or reject a driver registration
+ */
+export const useVerifyMedicalDriver = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyMedicalDriver>>, TError,{id: number;data: BodyType<VerificationInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof verifyMedicalDriver>>,
+        TError,
+        {id: number;data: BodyType<VerificationInput>},
+        TContext
+      > => {
+      return useMutation(getVerifyMedicalDriverMutationOptions(options));
+    }
+
+export const getListRecurringAppointmentsUrl = (params?: ListRecurringAppointmentsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/medical/appointments?${stringifiedParams}` : `/api/medical/appointments`
+}
+
+/**
+ * @summary List recurring appointments (optionally filter by patientId)
+ */
+export const listRecurringAppointments = async (params?: ListRecurringAppointmentsParams, options?: RequestInit): Promise<RecurringAppointment[]> => {
+
+  return customFetch<RecurringAppointment[]>(getListRecurringAppointmentsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListRecurringAppointmentsQueryKey = (params?: ListRecurringAppointmentsParams,) => {
+    return [
+    `/api/medical/appointments`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListRecurringAppointmentsQueryOptions = <TData = Awaited<ReturnType<typeof listRecurringAppointments>>, TError = ErrorType<unknown>>(params?: ListRecurringAppointmentsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listRecurringAppointments>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListRecurringAppointmentsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listRecurringAppointments>>> = ({ signal }) => listRecurringAppointments(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listRecurringAppointments>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListRecurringAppointmentsQueryResult = NonNullable<Awaited<ReturnType<typeof listRecurringAppointments>>>
+export type ListRecurringAppointmentsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List recurring appointments (optionally filter by patientId)
+ */
+
+export function useListRecurringAppointments<TData = Awaited<ReturnType<typeof listRecurringAppointments>>, TError = ErrorType<unknown>>(
+ params?: ListRecurringAppointmentsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listRecurringAppointments>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListRecurringAppointmentsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getCreateRecurringAppointmentUrl = () => {
+
+
+
+
+  return `/api/medical/appointments`
+}
+
+/**
+ * @summary Create a recurring appointment for a patient
+ */
+export const createRecurringAppointment = async (recurringAppointmentInput: RecurringAppointmentInput, options?: RequestInit): Promise<RecurringAppointment> => {
+
+  return customFetch<RecurringAppointment>(getCreateRecurringAppointmentUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      recurringAppointmentInput,)
+  }
+);}
+
+
+
+
+export const getCreateRecurringAppointmentMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createRecurringAppointment>>, TError,{data: BodyType<RecurringAppointmentInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createRecurringAppointment>>, TError,{data: BodyType<RecurringAppointmentInput>}, TContext> => {
+
+const mutationKey = ['createRecurringAppointment'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createRecurringAppointment>>, {data: BodyType<RecurringAppointmentInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createRecurringAppointment(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateRecurringAppointmentMutationResult = NonNullable<Awaited<ReturnType<typeof createRecurringAppointment>>>
+    export type CreateRecurringAppointmentMutationBody = BodyType<RecurringAppointmentInput>
+    export type CreateRecurringAppointmentMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Create a recurring appointment for a patient
+ */
+export const useCreateRecurringAppointment = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createRecurringAppointment>>, TError,{data: BodyType<RecurringAppointmentInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createRecurringAppointment>>,
+        TError,
+        {data: BodyType<RecurringAppointmentInput>},
+        TContext
+      > => {
+      return useMutation(getCreateRecurringAppointmentMutationOptions(options));
+    }
+
+export const getDeleteRecurringAppointmentUrl = (id: number,) => {
+
+
+
+
+  return `/api/medical/appointments/${id}`
+}
+
+/**
+ * @summary Deactivate a recurring appointment
+ */
+export const deleteRecurringAppointment = async (id: number, options?: RequestInit): Promise<void> => {
+
+  return customFetch<void>(getDeleteRecurringAppointmentUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getDeleteRecurringAppointmentMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteRecurringAppointment>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteRecurringAppointment>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['deleteRecurringAppointment'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteRecurringAppointment>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteRecurringAppointment(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteRecurringAppointmentMutationResult = NonNullable<Awaited<ReturnType<typeof deleteRecurringAppointment>>>
+
+    export type DeleteRecurringAppointmentMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Deactivate a recurring appointment
+ */
+export const useDeleteRecurringAppointment = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteRecurringAppointment>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteRecurringAppointment>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getDeleteRecurringAppointmentMutationOptions(options));
+    }
+
+export const getListMedicalTransportRequestsUrl = (params?: ListMedicalTransportRequestsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/medical/transport-requests?${stringifiedParams}` : `/api/medical/transport-requests`
+}
+
+/**
+ * @summary List all medical transport requests
+ */
+export const listMedicalTransportRequests = async (params?: ListMedicalTransportRequestsParams, options?: RequestInit): Promise<MedicalTransportRequest[]> => {
+
+  return customFetch<MedicalTransportRequest[]>(getListMedicalTransportRequestsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListMedicalTransportRequestsQueryKey = (params?: ListMedicalTransportRequestsParams,) => {
+    return [
+    `/api/medical/transport-requests`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListMedicalTransportRequestsQueryOptions = <TData = Awaited<ReturnType<typeof listMedicalTransportRequests>>, TError = ErrorType<unknown>>(params?: ListMedicalTransportRequestsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listMedicalTransportRequests>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListMedicalTransportRequestsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listMedicalTransportRequests>>> = ({ signal }) => listMedicalTransportRequests(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listMedicalTransportRequests>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListMedicalTransportRequestsQueryResult = NonNullable<Awaited<ReturnType<typeof listMedicalTransportRequests>>>
+export type ListMedicalTransportRequestsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List all medical transport requests
+ */
+
+export function useListMedicalTransportRequests<TData = Awaited<ReturnType<typeof listMedicalTransportRequests>>, TError = ErrorType<unknown>>(
+ params?: ListMedicalTransportRequestsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listMedicalTransportRequests>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListMedicalTransportRequestsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getCreateMedicalTransportRequestUrl = () => {
+
+
+
+
+  return `/api/medical/transport-requests`
+}
+
+/**
+ * @summary Request medical transport
+ */
+export const createMedicalTransportRequest = async (medicalTransportRequestInput: MedicalTransportRequestInput, options?: RequestInit): Promise<MedicalTransportRequest> => {
+
+  return customFetch<MedicalTransportRequest>(getCreateMedicalTransportRequestUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      medicalTransportRequestInput,)
+  }
+);}
+
+
+
+
+export const getCreateMedicalTransportRequestMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createMedicalTransportRequest>>, TError,{data: BodyType<MedicalTransportRequestInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createMedicalTransportRequest>>, TError,{data: BodyType<MedicalTransportRequestInput>}, TContext> => {
+
+const mutationKey = ['createMedicalTransportRequest'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createMedicalTransportRequest>>, {data: BodyType<MedicalTransportRequestInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createMedicalTransportRequest(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateMedicalTransportRequestMutationResult = NonNullable<Awaited<ReturnType<typeof createMedicalTransportRequest>>>
+    export type CreateMedicalTransportRequestMutationBody = BodyType<MedicalTransportRequestInput>
+    export type CreateMedicalTransportRequestMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Request medical transport
+ */
+export const useCreateMedicalTransportRequest = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createMedicalTransportRequest>>, TError,{data: BodyType<MedicalTransportRequestInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createMedicalTransportRequest>>,
+        TError,
+        {data: BodyType<MedicalTransportRequestInput>},
+        TContext
+      > => {
+      return useMutation(getCreateMedicalTransportRequestMutationOptions(options));
+    }
+
+export const getGetMedicalTransportRequestUrl = (id: number,) => {
+
+
+
+
+  return `/api/medical/transport-requests/${id}`
+}
+
+/**
+ * @summary Get a transport request
+ */
+export const getMedicalTransportRequest = async (id: number, options?: RequestInit): Promise<MedicalTransportRequest> => {
+
+  return customFetch<MedicalTransportRequest>(getGetMedicalTransportRequestUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetMedicalTransportRequestQueryKey = (id: number,) => {
+    return [
+    `/api/medical/transport-requests/${id}`
+    ] as const;
+    }
+
+
+export const getGetMedicalTransportRequestQueryOptions = <TData = Awaited<ReturnType<typeof getMedicalTransportRequest>>, TError = ErrorType<void>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMedicalTransportRequest>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMedicalTransportRequestQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMedicalTransportRequest>>> = ({ signal }) => getMedicalTransportRequest(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMedicalTransportRequest>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetMedicalTransportRequestQueryResult = NonNullable<Awaited<ReturnType<typeof getMedicalTransportRequest>>>
+export type GetMedicalTransportRequestQueryError = ErrorType<void>
+
+
+/**
+ * @summary Get a transport request
+ */
+
+export function useGetMedicalTransportRequest<TData = Awaited<ReturnType<typeof getMedicalTransportRequest>>, TError = ErrorType<void>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMedicalTransportRequest>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetMedicalTransportRequestQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getAssignMedicalDriverUrl = (id: number,) => {
+
+
+
+
+  return `/api/medical/transport-requests/${id}/assign`
+}
+
+/**
+ * @summary Assign a verified driver to a transport request
+ */
+export const assignMedicalDriver = async (id: number,
+    assignDriverInput: AssignDriverInput, options?: RequestInit): Promise<MedicalTransportRequest> => {
+
+  return customFetch<MedicalTransportRequest>(getAssignMedicalDriverUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      assignDriverInput,)
+  }
+);}
+
+
+
+
+export const getAssignMedicalDriverMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof assignMedicalDriver>>, TError,{id: number;data: BodyType<AssignDriverInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof assignMedicalDriver>>, TError,{id: number;data: BodyType<AssignDriverInput>}, TContext> => {
+
+const mutationKey = ['assignMedicalDriver'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof assignMedicalDriver>>, {id: number;data: BodyType<AssignDriverInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  assignMedicalDriver(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AssignMedicalDriverMutationResult = NonNullable<Awaited<ReturnType<typeof assignMedicalDriver>>>
+    export type AssignMedicalDriverMutationBody = BodyType<AssignDriverInput>
+    export type AssignMedicalDriverMutationError = ErrorType<void>
+
+    /**
+ * @summary Assign a verified driver to a transport request
+ */
+export const useAssignMedicalDriver = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof assignMedicalDriver>>, TError,{id: number;data: BodyType<AssignDriverInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof assignMedicalDriver>>,
+        TError,
+        {id: number;data: BodyType<AssignDriverInput>},
+        TContext
+      > => {
+      return useMutation(getAssignMedicalDriverMutationOptions(options));
     }
 
 export const getGetStatsUrl = () => {

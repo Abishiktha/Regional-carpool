@@ -13,5 +13,4 @@ export interface Stats {
   activeRideRequests: number;
   totalBookings: number;
   totalAcceptances: number;
-  seatsAvailable: number;
 }

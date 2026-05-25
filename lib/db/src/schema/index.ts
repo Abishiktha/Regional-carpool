@@ -2,3 +2,7 @@ export * from "./carpoolPosts";
 export * from "./bookings";
 export * from "./rideRequests";
 export * from "./rideAcceptances";
+export * from "./medicalPatients";
+export * from "./medicalDrivers";
+export * from "./recurringAppointments";
+export * from "./medicalTransportRequests";

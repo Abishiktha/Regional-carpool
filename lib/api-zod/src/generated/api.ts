@@ -190,6 +190,362 @@ export const AcceptRideRequestBody = zod.object({
 
 
 /**
+ * @summary Register as a medical transport patient
+ */
+export const RegisterMedicalPatientBody = zod.object({
+  "fullName": zod.string(),
+  "dateOfBirth": zod.string(),
+  "phone": zod.string(),
+  "address": zod.string(),
+  "suburb": zod.string(),
+  "state": zod.string(),
+  "postcode": zod.string(),
+  "medicareNumber": zod.string(),
+  "gpName": zod.string(),
+  "gpPhone": zod.string(),
+  "emergencyContactName": zod.string(),
+  "emergencyContactPhone": zod.string(),
+  "mobilityNeeds": zod.string(),
+  "notes": zod.string().optional()
+})
+
+
+/**
+ * @summary List all registered patients
+ */
+export const ListMedicalPatientsResponseItem = zod.object({
+  "id": zod.number(),
+  "fullName": zod.string(),
+  "dateOfBirth": zod.string(),
+  "phone": zod.string(),
+  "address": zod.string(),
+  "suburb": zod.string(),
+  "state": zod.string(),
+  "postcode": zod.string(),
+  "medicareNumber": zod.string(),
+  "gpName": zod.string(),
+  "gpPhone": zod.string(),
+  "emergencyContactName": zod.string(),
+  "emergencyContactPhone": zod.string(),
+  "mobilityNeeds": zod.string(),
+  "notes": zod.string().nullish(),
+  "verificationStatus": zod.string(),
+  "createdAt": zod.string()
+})
+export const ListMedicalPatientsResponse = zod.array(ListMedicalPatientsResponseItem)
+
+
+/**
+ * @summary Get a patient record
+ */
+export const GetMedicalPatientParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetMedicalPatientResponse = zod.object({
+  "id": zod.number(),
+  "fullName": zod.string(),
+  "dateOfBirth": zod.string(),
+  "phone": zod.string(),
+  "address": zod.string(),
+  "suburb": zod.string(),
+  "state": zod.string(),
+  "postcode": zod.string(),
+  "medicareNumber": zod.string(),
+  "gpName": zod.string(),
+  "gpPhone": zod.string(),
+  "emergencyContactName": zod.string(),
+  "emergencyContactPhone": zod.string(),
+  "mobilityNeeds": zod.string(),
+  "notes": zod.string().nullish(),
+  "verificationStatus": zod.string(),
+  "createdAt": zod.string()
+})
+
+
+/**
+ * @summary Approve or reject a patient registration
+ */
+export const VerifyMedicalPatientParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const VerifyMedicalPatientBody = zod.object({
+  "status": zod.string(),
+  "rejectionReason": zod.string().optional()
+})
+
+export const VerifyMedicalPatientResponse = zod.object({
+  "id": zod.number(),
+  "fullName": zod.string(),
+  "dateOfBirth": zod.string(),
+  "phone": zod.string(),
+  "address": zod.string(),
+  "suburb": zod.string(),
+  "state": zod.string(),
+  "postcode": zod.string(),
+  "medicareNumber": zod.string(),
+  "gpName": zod.string(),
+  "gpPhone": zod.string(),
+  "emergencyContactName": zod.string(),
+  "emergencyContactPhone": zod.string(),
+  "mobilityNeeds": zod.string(),
+  "notes": zod.string().nullish(),
+  "verificationStatus": zod.string(),
+  "createdAt": zod.string()
+})
+
+
+/**
+ * @summary Register as a medical transport driver
+ */
+export const RegisterMedicalDriverBody = zod.object({
+  "fullName": zod.string(),
+  "phone": zod.string(),
+  "licenseNumber": zod.string(),
+  "vehicleType": zod.string(),
+  "vehicleRego": zod.string(),
+  "vehicleCapacity": zod.number(),
+  "hasWheelchairAccess": zod.boolean(),
+  "workingWithChildrenCheck": zod.boolean(),
+  "policeCheckDone": zod.boolean(),
+  "notes": zod.string().optional()
+})
+
+
+/**
+ * @summary List all registered drivers
+ */
+export const ListMedicalDriversResponseItem = zod.object({
+  "id": zod.number(),
+  "fullName": zod.string(),
+  "phone": zod.string(),
+  "licenseNumber": zod.string(),
+  "vehicleType": zod.string(),
+  "vehicleRego": zod.string(),
+  "vehicleCapacity": zod.number(),
+  "hasWheelchairAccess": zod.boolean(),
+  "workingWithChildrenCheck": zod.boolean(),
+  "policeCheckDone": zod.boolean(),
+  "verificationStatus": zod.string(),
+  "notes": zod.string().nullish(),
+  "createdAt": zod.string()
+})
+export const ListMedicalDriversResponse = zod.array(ListMedicalDriversResponseItem)
+
+
+/**
+ * @summary Get a driver record
+ */
+export const GetMedicalDriverParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetMedicalDriverResponse = zod.object({
+  "id": zod.number(),
+  "fullName": zod.string(),
+  "phone": zod.string(),
+  "licenseNumber": zod.string(),
+  "vehicleType": zod.string(),
+  "vehicleRego": zod.string(),
+  "vehicleCapacity": zod.number(),
+  "hasWheelchairAccess": zod.boolean(),
+  "workingWithChildrenCheck": zod.boolean(),
+  "policeCheckDone": zod.boolean(),
+  "verificationStatus": zod.string(),
+  "notes": zod.string().nullish(),
+  "createdAt": zod.string()
+})
+
+
+/**
+ * @summary Approve or reject a driver registration
+ */
+export const VerifyMedicalDriverParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const VerifyMedicalDriverBody = zod.object({
+  "status": zod.string(),
+  "rejectionReason": zod.string().optional()
+})
+
+export const VerifyMedicalDriverResponse = zod.object({
+  "id": zod.number(),
+  "fullName": zod.string(),
+  "phone": zod.string(),
+  "licenseNumber": zod.string(),
+  "vehicleType": zod.string(),
+  "vehicleRego": zod.string(),
+  "vehicleCapacity": zod.number(),
+  "hasWheelchairAccess": zod.boolean(),
+  "workingWithChildrenCheck": zod.boolean(),
+  "policeCheckDone": zod.boolean(),
+  "verificationStatus": zod.string(),
+  "notes": zod.string().nullish(),
+  "createdAt": zod.string()
+})
+
+
+/**
+ * @summary List recurring appointments (optionally filter by patientId)
+ */
+export const ListRecurringAppointmentsQueryParams = zod.object({
+  "patientId": zod.coerce.number().optional()
+})
+
+export const ListRecurringAppointmentsResponseItem = zod.object({
+  "id": zod.number(),
+  "patientId": zod.number(),
+  "clinicName": zod.string(),
+  "clinicAddress": zod.string(),
+  "clinicSuburb": zod.string(),
+  "appointmentType": zod.string(),
+  "dayOfWeek": zod.string(),
+  "appointmentTime": zod.string(),
+  "frequencyWeeks": zod.number(),
+  "nextDate": zod.string(),
+  "active": zod.boolean(),
+  "notes": zod.string().nullish(),
+  "createdAt": zod.string()
+})
+export const ListRecurringAppointmentsResponse = zod.array(ListRecurringAppointmentsResponseItem)
+
+
+/**
+ * @summary Create a recurring appointment for a patient
+ */
+export const CreateRecurringAppointmentBody = zod.object({
+  "patientId": zod.number(),
+  "clinicName": zod.string(),
+  "clinicAddress": zod.string(),
+  "clinicSuburb": zod.string(),
+  "appointmentType": zod.string(),
+  "dayOfWeek": zod.string(),
+  "appointmentTime": zod.string(),
+  "frequencyWeeks": zod.number(),
+  "nextDate": zod.string(),
+  "notes": zod.string().optional()
+})
+
+
+/**
+ * @summary Deactivate a recurring appointment
+ */
+export const DeleteRecurringAppointmentParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+/**
+ * @summary List all medical transport requests
+ */
+export const ListMedicalTransportRequestsQueryParams = zod.object({
+  "patientId": zod.coerce.number().optional(),
+  "status": zod.coerce.string().optional()
+})
+
+export const ListMedicalTransportRequestsResponseItem = zod.object({
+  "id": zod.number(),
+  "patientId": zod.number(),
+  "patientName": zod.string(),
+  "appointmentId": zod.number().nullable(),
+  "pickupAddress": zod.string(),
+  "pickupSuburb": zod.string(),
+  "destinationName": zod.string(),
+  "destinationAddress": zod.string(),
+  "tripDate": zod.string(),
+  "tripTime": zod.string(),
+  "returnTrip": zod.boolean().optional(),
+  "returnTime": zod.string().nullish(),
+  "assignedDriverId": zod.number().nullish(),
+  "assignedDriverName": zod.string().nullish(),
+  "status": zod.string(),
+  "notes": zod.string().nullish(),
+  "createdAt": zod.string()
+})
+export const ListMedicalTransportRequestsResponse = zod.array(ListMedicalTransportRequestsResponseItem)
+
+
+/**
+ * @summary Request medical transport
+ */
+export const CreateMedicalTransportRequestBody = zod.object({
+  "patientId": zod.number(),
+  "appointmentId": zod.number().optional(),
+  "pickupAddress": zod.string(),
+  "pickupSuburb": zod.string(),
+  "destinationName": zod.string(),
+  "destinationAddress": zod.string(),
+  "tripDate": zod.string(),
+  "tripTime": zod.string(),
+  "returnTrip": zod.boolean(),
+  "returnTime": zod.string().optional(),
+  "notes": zod.string().optional()
+})
+
+
+/**
+ * @summary Get a transport request
+ */
+export const GetMedicalTransportRequestParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetMedicalTransportRequestResponse = zod.object({
+  "id": zod.number(),
+  "patientId": zod.number(),
+  "patientName": zod.string(),
+  "appointmentId": zod.number().nullable(),
+  "pickupAddress": zod.string(),
+  "pickupSuburb": zod.string(),
+  "destinationName": zod.string(),
+  "destinationAddress": zod.string(),
+  "tripDate": zod.string(),
+  "tripTime": zod.string(),
+  "returnTrip": zod.boolean().optional(),
+  "returnTime": zod.string().nullish(),
+  "assignedDriverId": zod.number().nullish(),
+  "assignedDriverName": zod.string().nullish(),
+  "status": zod.string(),
+  "notes": zod.string().nullish(),
+  "createdAt": zod.string()
+})
+
+
+/**
+ * @summary Assign a verified driver to a transport request
+ */
+export const AssignMedicalDriverParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const AssignMedicalDriverBody = zod.object({
+  "driverId": zod.number()
+})
+
+export const AssignMedicalDriverResponse = zod.object({
+  "id": zod.number(),
+  "patientId": zod.number(),
+  "patientName": zod.string(),
+  "appointmentId": zod.number().nullable(),
+  "pickupAddress": zod.string(),
+  "pickupSuburb": zod.string(),
+  "destinationName": zod.string(),
+  "destinationAddress": zod.string(),
+  "tripDate": zod.string(),
+  "tripTime": zod.string(),
+  "returnTrip": zod.boolean().optional(),
+  "returnTime": zod.string().nullish(),
+  "assignedDriverId": zod.number().nullish(),
+  "assignedDriverName": zod.string().nullish(),
+  "status": zod.string(),
+  "notes": zod.string().nullish(),
+  "createdAt": zod.string()
+})
+
+
+/**
  * @summary Get summary statistics
  */
 export const GetStatsResponse = zod.object({
@@ -198,8 +554,7 @@ export const GetStatsResponse = zod.object({
   "totalRideRequests": zod.number(),
   "activeRideRequests": zod.number(),
   "totalBookings": zod.number(),
-  "totalAcceptances": zod.number(),
-  "seatsAvailable": zod.number()
+  "totalAcceptances": zod.number()
 })
 
 
