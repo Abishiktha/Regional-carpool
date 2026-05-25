@@ -10,6 +10,7 @@ import MedicalHub from "@/pages/medical-hub";
 import MedicalPatientRegister from "@/pages/medical-patient-register";
 import MedicalDriverRegister from "@/pages/medical-driver-register";
 import NewMedicalTransport from "@/pages/new-medical-transport";
+import Admin from "@/pages/admin";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -30,6 +31,7 @@ function Router() {
       <Route path="/medical/register/patient" component={MedicalPatientRegister} />
       <Route path="/medical/register/driver" component={MedicalDriverRegister} />
       <Route path="/medical/transport/new" component={NewMedicalTransport} />
+      <Route path="/admin" component={Admin} />
       <Route component={NotFound} />
     </Switch>
   );

@@ -1,9 +1,10 @@
 import { Link, useLocation } from "wouter";
-import { HeartPulse } from "lucide-react";
+import { HeartPulse, ShieldCheck } from "lucide-react";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const isMedical = location.startsWith("/medical");
+  const isAdmin = location.startsWith("/admin");
 
   return (
     <div className="min-h-[100dvh] flex flex-col bg-background">
@@ -20,7 +21,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <nav className="flex items-center gap-1">
             <Link
               href="/"
-              className={`text-sm font-medium px-3 py-1.5 rounded-md transition-colors ${!isMedical ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
+              className={`text-sm font-medium px-3 py-1.5 rounded-md transition-colors ${!isMedical && !isAdmin ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
               data-testid="nav-board"
             >
               Board
@@ -32,6 +33,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
             >
               <HeartPulse className="w-3.5 h-3.5" />
               Medical Transport
+            </Link>
+            <Link
+              href="/admin"
+              className={`text-sm font-medium px-3 py-1.5 rounded-md transition-colors flex items-center gap-1.5 ${isAdmin ? "text-foreground bg-muted" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
+              data-testid="nav-admin"
+            >
+              <ShieldCheck className="w-3.5 h-3.5" />
+              Admin
             </Link>
           </nav>
         </div>
