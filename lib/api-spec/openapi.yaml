@@ -1,22 +1,26 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Regional Carpool API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: carpool-posts
+    description: Carpool board - drivers post trips
+  - name: ride-requests
+    description: Ride request board - passengers post requests
+  - name: stats
+    description: Summary statistics
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,13 +28,406 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /carpool-posts:
+    get:
+      operationId: listCarpoolPosts
+      tags: [carpool-posts]
+      summary: List all carpool posts
+      parameters:
+        - name: fromLocation
+          in: query
+          schema: { type: string }
+        - name: toLocation
+          in: query
+          schema: { type: string }
+        - name: date
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: List of carpool posts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CarpoolPost"
+    post:
+      operationId: createCarpoolPost
+      tags: [carpool-posts]
+      summary: Driver posts a trip
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CarpoolPostInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CarpoolPost"
+
+  /carpool-posts/{id}:
+    get:
+      operationId: getCarpoolPost
+      tags: [carpool-posts]
+      summary: Get a carpool post
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Carpool post
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CarpoolPost"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteCarpoolPost
+      tags: [carpool-posts]
+      summary: Remove a carpool post
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "204":
+          description: Deleted
+
+  /carpool-posts/{id}/book:
+    post:
+      operationId: bookCarpoolPost
+      tags: [carpool-posts]
+      summary: Passenger books a seat ($5 fee)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookingInput"
+      responses:
+        "201":
+          description: Booking confirmed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "400":
+          description: No seats available or already booked
+
+  /ride-requests:
+    get:
+      operationId: listRideRequests
+      tags: [ride-requests]
+      summary: List all ride requests
+      parameters:
+        - name: fromLocation
+          in: query
+          schema: { type: string }
+        - name: toLocation
+          in: query
+          schema: { type: string }
+        - name: date
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: List of ride requests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RideRequest"
+    post:
+      operationId: createRideRequest
+      tags: [ride-requests]
+      summary: Passenger posts a ride request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RideRequestInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RideRequest"
+
+  /ride-requests/{id}:
+    get:
+      operationId: getRideRequest
+      tags: [ride-requests]
+      summary: Get a ride request
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Ride request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RideRequest"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteRideRequest
+      tags: [ride-requests]
+      summary: Remove a ride request
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "204":
+          description: Deleted
+
+  /ride-requests/{id}/accept:
+    post:
+      operationId: acceptRideRequest
+      tags: [ride-requests]
+      summary: Driver accepts a ride request (10% commission)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RideAcceptanceInput"
+      responses:
+        "201":
+          description: Acceptance confirmed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RideAcceptance"
+        "400":
+          description: Already accepted
+
+  /stats:
+    get:
+      operationId: getStats
+      tags: [stats]
+      summary: Get summary statistics
+      responses:
+        "200":
+          description: Stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Stats"
+
 components:
   schemas:
     HealthStatus:
       type: object
+      required: [status]
       properties:
         status:
           type: string
-      required:
-        - status
 
+    CarpoolPost:
+      type: object
+      required: [id, driverName, driverPhone, fromLocation, toLocation, travelDate, travelTime, totalSeats, availableSeats, pricePerSeat, status, createdAt]
+      properties:
+        id:
+          type: integer
+        driverName:
+          type: string
+        driverPhone:
+          type: string
+        fromLocation:
+          type: string
+        toLocation:
+          type: string
+        travelDate:
+          type: string
+        travelTime:
+          type: string
+        totalSeats:
+          type: integer
+        availableSeats:
+          type: integer
+        pricePerSeat:
+          type: number
+        notes:
+          type: ["string", "null"]
+        status:
+          type: string
+        createdAt:
+          type: string
+
+    CarpoolPostInput:
+      type: object
+      required: [driverName, driverPhone, fromLocation, toLocation, travelDate, travelTime, totalSeats]
+      properties:
+        driverName:
+          type: string
+        driverPhone:
+          type: string
+        fromLocation:
+          type: string
+        toLocation:
+          type: string
+        travelDate:
+          type: string
+        travelTime:
+          type: string
+        totalSeats:
+          type: integer
+        notes:
+          type: string
+
+    Booking:
+      type: object
+      required: [id, carpoolPostId, passengerName, passengerPhone, seatsBooked, totalPaid, status, createdAt]
+      properties:
+        id:
+          type: integer
+        carpoolPostId:
+          type: integer
+        passengerName:
+          type: string
+        passengerPhone:
+          type: string
+        seatsBooked:
+          type: integer
+        totalPaid:
+          type: number
+        status:
+          type: string
+        createdAt:
+          type: string
+
+    BookingInput:
+      type: object
+      required: [passengerName, passengerPhone, seatsBooked]
+      properties:
+        passengerName:
+          type: string
+        passengerPhone:
+          type: string
+        seatsBooked:
+          type: integer
+
+    RideRequest:
+      type: object
+      required: [id, passengerName, passengerPhone, fromLocation, toLocation, travelDate, passengerCount, offeredPrice, status, createdAt]
+      properties:
+        id:
+          type: integer
+        passengerName:
+          type: string
+        passengerPhone:
+          type: string
+        fromLocation:
+          type: string
+        toLocation:
+          type: string
+        travelDate:
+          type: string
+        passengerCount:
+          type: integer
+        offeredPrice:
+          type: number
+        notes:
+          type: ["string", "null"]
+        status:
+          type: string
+        acceptedDriverName:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    RideRequestInput:
+      type: object
+      required: [passengerName, passengerPhone, fromLocation, toLocation, travelDate, passengerCount, offeredPrice]
+      properties:
+        passengerName:
+          type: string
+        passengerPhone:
+          type: string
+        fromLocation:
+          type: string
+        toLocation:
+          type: string
+        travelDate:
+          type: string
+        passengerCount:
+          type: integer
+        offeredPrice:
+          type: number
+        notes:
+          type: string
+
+    RideAcceptance:
+      type: object
+      required: [id, rideRequestId, driverName, driverPhone, commission, netEarnings, createdAt]
+      properties:
+        id:
+          type: integer
+        rideRequestId:
+          type: integer
+        driverName:
+          type: string
+        driverPhone:
+          type: string
+        commission:
+          type: number
+        netEarnings:
+          type: number
+        createdAt:
+          type: string
+
+    RideAcceptanceInput:
+      type: object
+      required: [driverName, driverPhone]
+      properties:
+        driverName:
+          type: string
+        driverPhone:
+          type: string
+
+    Stats:
+      type: object
+      required: [totalCarpoolPosts, activeCarpoolPosts, totalRideRequests, activeRideRequests, totalBookings, totalAcceptances, seatsAvailable]
+      properties:
+        totalCarpoolPosts:
+          type: integer
+        activeCarpoolPosts:
+          type: integer
+        totalRideRequests:
+          type: integer
+        activeRideRequests:
+          type: integer
+        totalBookings:
+          type: integer
+        totalAcceptances:
+          type: integer
+        seatsAvailable:
+          type: integer
