@@ -12,6 +12,7 @@ import MedicalDriverRegister from "@/pages/medical-driver-register";
 import NewMedicalTransport from "@/pages/new-medical-transport";
 import Admin from "@/pages/admin";
 import MyMessages from "@/pages/my-messages";
+import RecurringAppointments from "@/pages/recurring-appointments";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -34,6 +35,7 @@ function Router() {
       <Route path="/medical/transport/new" component={NewMedicalTransport} />
       <Route path="/admin" component={Admin} />
       <Route path="/medical/messages" component={MyMessages} />
+      <Route path="/medical/appointments" component={RecurringAppointments} />
       <Route component={NotFound} />
     </Switch>
   );

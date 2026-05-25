@@ -40,12 +40,31 @@ export default function NewMedicalTransport() {
   const { toast } = useToast();
   const create = useCreateMedicalTransportRequest();
 
+  // Read pre-fill params from recurring appointments page
+  const urlParams = new URLSearchParams(window.location.search);
+  const prefill = {
+    patientId: parseInt(urlParams.get("patientId") ?? "0", 10) || 0,
+    destinationName: urlParams.get("destinationName") ?? "",
+    destinationAddress: urlParams.get("destinationAddress") ?? "",
+    tripDate: urlParams.get("tripDate") ?? "",
+    tripTime: urlParams.get("tripTime") ?? "",
+  };
+  const appointmentId = urlParams.get("appointmentId") ? Number(urlParams.get("appointmentId")) : undefined;
+  const fromAppointment = !!appointmentId;
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      patientId: 0, pickupAddress: "", pickupSuburb: "", destinationName: "",
-      destinationAddress: "", tripDate: "", tripTime: "", returnTrip: false,
-      returnTime: "", notes: "",
+      patientId: prefill.patientId,
+      pickupAddress: "",
+      pickupSuburb: "",
+      destinationName: prefill.destinationName,
+      destinationAddress: prefill.destinationAddress,
+      tripDate: prefill.tripDate,
+      tripTime: prefill.tripTime,
+      returnTrip: false,
+      returnTime: "",
+      notes: "",
     },
   });
 
@@ -56,6 +75,7 @@ export default function NewMedicalTransport() {
     const payload = {
       ...values,
       returnTime: values.returnTrip ? values.returnTime : undefined,
+      ...(appointmentId ? { appointmentId } : {}),
     };
     create.mutate({ data: payload }, {
       onSuccess: (req) => {
@@ -127,6 +147,14 @@ export default function NewMedicalTransport() {
         <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-1">Book Medical Transport</h1>
         <p className="text-muted-foreground mb-4">Request a verified driver for your medical appointment.</p>
 
+        {fromAppointment && (
+          <div className="rounded-lg bg-amber-50 border border-amber-200 p-4 text-sm text-amber-800 mb-4 flex gap-2">
+            <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
+            <div>
+              <strong>Pre-filled from recurring appointment.</strong> The clinic name, address, date, and time have been filled in for you. Just add your pickup address and you're done.
+            </div>
+          </div>
+        )}
         <div className="rounded-lg bg-teal-50 border border-teal-200 p-4 text-sm text-teal-800 mb-8 flex gap-2">
           <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
           <div>

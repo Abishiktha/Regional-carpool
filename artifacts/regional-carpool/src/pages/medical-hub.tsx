@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useListMedicalTransportRequests } from "@workspace/api-client-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MapPin, Clock, CheckCircle2, UserCheck, Car, ShieldCheck, ClipboardList, ArrowRight, CalendarDays, Bell } from "lucide-react";
+import { MapPin, Clock, CheckCircle2, UserCheck, Car, ShieldCheck, ClipboardList, ArrowRight, CalendarDays, Bell, RepeatIcon } from "lucide-react";
 
 function statusColor(status: string) {
   if (status === "pending") return "bg-amber-100 text-amber-800 border-amber-200";
@@ -31,7 +31,7 @@ export default function MedicalHub() {
         </p>
       </div>
 
-      <div className="grid sm:grid-cols-2 gap-5 mb-10">
+      <div className="grid sm:grid-cols-3 gap-5 mb-10">
         <div className="rounded-xl border bg-card p-6 flex flex-col gap-4 hover:shadow-md transition-shadow" data-testid="card-patient-register">
           <div className="w-12 h-12 rounded-xl bg-teal-50 border border-teal-200 flex items-center justify-center">
             <UserCheck className="w-6 h-6 text-teal-700" />
@@ -72,6 +72,28 @@ export default function MedicalHub() {
           <Link href="/medical/register/driver">
             <Button variant="outline" className="w-full border-primary text-primary hover:bg-primary/5 mt-auto" data-testid="btn-register-driver">
               Register as Driver <ArrowRight className="w-4 h-4 ml-1" />
+            </Button>
+          </Link>
+        </div>
+
+        <div className="rounded-xl border bg-card p-6 flex flex-col gap-4 hover:shadow-md transition-shadow" data-testid="card-recurring-appointments">
+          <div className="w-12 h-12 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center">
+            <RepeatIcon className="w-6 h-6 text-amber-700" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-foreground">Recurring appointments</h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              Register standing weekly or fortnightly trips — dialysis, chemotherapy, specialist visits — and book transport for each one in seconds.
+            </p>
+          </div>
+          <ul className="space-y-1.5 text-sm text-muted-foreground">
+            <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-amber-600 flex-shrink-0" />Register once, book every trip</li>
+            <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-amber-600 flex-shrink-0" />Clinic details pre-filled for you</li>
+            <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-amber-600 flex-shrink-0" />Weekly, fortnightly or monthly</li>
+          </ul>
+          <Link href="/medical/appointments">
+            <Button variant="outline" className="w-full border-amber-600 text-amber-700 hover:bg-amber-50 mt-auto" data-testid="btn-recurring-appointments">
+              Manage Appointments <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
           </Link>
         </div>
