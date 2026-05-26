@@ -104,6 +104,7 @@ export interface Stats {
   activeRideRequests: number;
   totalBookings: number;
   totalAcceptances: number;
+  seatsAvailable: number;
 }
 
 export interface MedicalPatient {
@@ -241,6 +242,11 @@ export interface MedicalTransportRequestInput {
   returnTrip: boolean;
   returnTime?: string;
   notes?: string;
+}
+
+export interface CancelTransportInput {
+  /** Reason for cancellation */
+  reason: string;
 }
 
 export interface AssignDriverInput {

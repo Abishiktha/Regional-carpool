@@ -23,6 +23,7 @@ import type {
   AssignDriverInput,
   Booking,
   BookingInput,
+  CancelTransportInput,
   CarpoolPost,
   CarpoolPostInput,
   HealthStatus,
@@ -1935,6 +1936,78 @@ export function useGetMedicalTransportRequest<TData = Awaited<ReturnType<typeof 
 
 
 
+
+export const getCancelMedicalTransportRequestUrl = (id: number,) => {
+
+
+
+
+  return `/api/medical/transport-requests/${id}/cancel`
+}
+
+/**
+ * @summary Cancel an upcoming transport booking (patient action)
+ */
+export const cancelMedicalTransportRequest = async (id: number,
+    cancelTransportInput: CancelTransportInput, options?: RequestInit): Promise<MedicalTransportRequest> => {
+
+  return customFetch<MedicalTransportRequest>(getCancelMedicalTransportRequestUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      cancelTransportInput,)
+  }
+);}
+
+
+
+
+export const getCancelMedicalTransportRequestMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancelMedicalTransportRequest>>, TError,{id: number;data: BodyType<CancelTransportInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof cancelMedicalTransportRequest>>, TError,{id: number;data: BodyType<CancelTransportInput>}, TContext> => {
+
+const mutationKey = ['cancelMedicalTransportRequest'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof cancelMedicalTransportRequest>>, {id: number;data: BodyType<CancelTransportInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  cancelMedicalTransportRequest(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CancelMedicalTransportRequestMutationResult = NonNullable<Awaited<ReturnType<typeof cancelMedicalTransportRequest>>>
+    export type CancelMedicalTransportRequestMutationBody = BodyType<CancelTransportInput>
+    export type CancelMedicalTransportRequestMutationError = ErrorType<void>
+
+    /**
+ * @summary Cancel an upcoming transport booking (patient action)
+ */
+export const useCancelMedicalTransportRequest = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancelMedicalTransportRequest>>, TError,{id: number;data: BodyType<CancelTransportInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof cancelMedicalTransportRequest>>,
+        TError,
+        {id: number;data: BodyType<CancelTransportInput>},
+        TContext
+      > => {
+      return useMutation(getCancelMedicalTransportRequestMutationOptions(options));
+    }
 
 export const getCompleteMedicalTransportRequestUrl = (id: number,) => {
 

@@ -9,6 +9,7 @@
 export * from './assignDriverInput';
 export * from './booking';
 export * from './bookingInput';
+export * from './cancelTransportInput';
 export * from './carpoolPost';
 export * from './carpoolPostInput';
 export * from './healthStatus';

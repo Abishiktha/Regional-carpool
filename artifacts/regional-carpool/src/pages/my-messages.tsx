@@ -65,7 +65,8 @@ export default function MyMessages() {
 
   const { data: notifications, isLoading, isFetched } = useListNotifications(
     searchedId !== null ? { recipientType: searchedType, recipientId: searchedId } : undefined,
-    { query: { enabled: searchedId !== null } }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    { query: { enabled: searchedId !== null } as any }
   );
 
   function handleSearch(e: React.FormEvent) {

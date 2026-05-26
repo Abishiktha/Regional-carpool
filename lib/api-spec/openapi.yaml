@@ -503,6 +503,34 @@ paths:
         "404":
           description: Not found
 
+  /medical/transport-requests/{id}/cancel:
+    post:
+      operationId: cancelMedicalTransportRequest
+      tags: [medical-transport]
+      summary: Cancel an upcoming transport booking (patient action)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CancelTransportInput"
+      responses:
+        "200":
+          description: Trip cancelled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MedicalTransportRequest"
+        "400":
+          description: Trip cannot be cancelled (already completed or cancelled)
+        "404":
+          description: Not found
+
   /medical/transport-requests/{id}/complete:
     post:
       operationId: completeMedicalTransportRequest
@@ -773,6 +801,8 @@ components:
           type: integer
         totalAcceptances:
           type: integer
+        seatsAvailable:
+          type: integer
 
     MedicalPatient:
       type: object
@@ -1023,6 +1053,14 @@ components:
           type: string
         notes:
           type: string
+
+    CancelTransportInput:
+      type: object
+      required: [reason]
+      properties:
+        reason:
+          type: string
+          description: Reason for cancellation
 
     AssignDriverInput:
       type: object

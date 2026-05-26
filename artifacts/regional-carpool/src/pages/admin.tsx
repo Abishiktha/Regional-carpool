@@ -37,6 +37,7 @@ function verificationBadge(status: string) {
 }
 
 function transportStatusBadge(status: string) {
+  if (status === "cancelled") return <Badge className="bg-red-100 text-red-700 border-red-200 border text-xs">Cancelled</Badge>;
   if (status === "assigned") return <Badge className="bg-green-100 text-green-800 border-green-200 border text-xs">Assigned</Badge>;
   if (status === "completed") return <Badge className="bg-slate-100 text-slate-600 border-slate-200 border text-xs">Completed</Badge>;
   return <Badge className="bg-amber-100 text-amber-800 border-amber-200 border text-xs">Pending</Badge>;

@@ -515,6 +515,38 @@ export const GetMedicalTransportRequestResponse = zod.object({
 
 
 /**
+ * @summary Cancel an upcoming transport booking (patient action)
+ */
+export const CancelMedicalTransportRequestParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const CancelMedicalTransportRequestBody = zod.object({
+  "reason": zod.string().describe('Reason for cancellation')
+})
+
+export const CancelMedicalTransportRequestResponse = zod.object({
+  "id": zod.number(),
+  "patientId": zod.number(),
+  "patientName": zod.string(),
+  "appointmentId": zod.number().nullable(),
+  "pickupAddress": zod.string(),
+  "pickupSuburb": zod.string(),
+  "destinationName": zod.string(),
+  "destinationAddress": zod.string(),
+  "tripDate": zod.string(),
+  "tripTime": zod.string(),
+  "returnTrip": zod.boolean().optional(),
+  "returnTime": zod.string().nullish(),
+  "assignedDriverId": zod.number().nullish(),
+  "assignedDriverName": zod.string().nullish(),
+  "status": zod.string(),
+  "notes": zod.string().nullish(),
+  "createdAt": zod.string()
+})
+
+
+/**
  * @summary Mark a transport request as completed by the driver
  */
 export const CompleteMedicalTransportRequestParams = zod.object({
@@ -606,7 +638,8 @@ export const GetStatsResponse = zod.object({
   "totalRideRequests": zod.number(),
   "activeRideRequests": zod.number(),
   "totalBookings": zod.number(),
-  "totalAcceptances": zod.number()
+  "totalAcceptances": zod.number(),
+  "seatsAvailable": zod.number()
 })
 
 

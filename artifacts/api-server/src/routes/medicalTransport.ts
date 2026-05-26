@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db, medicalTransportRequestsTable, medicalPatientsTable, medicalDriversTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
-import { notifyDriverAssigned, notifyTripCompleted } from "../lib/notifications";
+import { notifyDriverAssigned, notifyTripCompleted, notifyTripCancelled } from "../lib/notifications";
 import {
   ListMedicalTransportRequestsQueryParams,
   CreateMedicalTransportRequestBody,
@@ -63,6 +63,50 @@ router.get("/:id", async (req, res) => {
   const [row] = await db.select().from(medicalTransportRequestsTable).where(eq(medicalTransportRequestsTable.id, parsed.data.id));
   if (!row) { res.status(404).json({ error: "Not found" }); return; }
   res.json(fmt(row));
+});
+
+router.post("/:id/cancel", async (req, res) => {
+  const parsed = GetMedicalTransportRequestParams.safeParse({ id: Number(req.params.id) });
+  if (!parsed.success) { res.status(400).json({ error: "Invalid id" }); return; }
+
+  const [request] = await db
+    .select()
+    .from(medicalTransportRequestsTable)
+    .where(eq(medicalTransportRequestsTable.id, parsed.data.id));
+
+  if (!request) { res.status(404).json({ error: "Transport request not found" }); return; }
+  if (request.status === "completed" || request.status === "cancelled") {
+    res.status(400).json({ error: "Trip cannot be cancelled — it is already completed or cancelled" });
+    return;
+  }
+
+  const reason: string = (req.body as { reason?: string }).reason?.trim() || "No reason provided";
+
+  const [updated] = await db
+    .update(medicalTransportRequestsTable)
+    .set({ status: "cancelled" })
+    .where(eq(medicalTransportRequestsTable.id, request.id))
+    .returning();
+
+  const [patient] = await db
+    .select()
+    .from(medicalPatientsTable)
+    .where(eq(medicalPatientsTable.id, request.patientId));
+
+  if (patient) {
+    await notifyTripCancelled({
+      patientId: patient.id,
+      patientName: patient.fullName,
+      patientPhone: patient.phone,
+      driverId: request.assignedDriverId ?? null,
+      driverName: request.assignedDriverName ?? null,
+      tripDate: request.tripDate,
+      destinationName: request.destinationName,
+      reason,
+    });
+  }
+
+  res.json(fmt(updated));
 });
 
 router.post("/:id/complete", async (req, res) => {

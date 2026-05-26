@@ -1,14 +1,19 @@
 import { useState } from "react";
 import { Link } from "wouter";
+import { useQueryClient } from "@tanstack/react-query";
 import { Layout } from "@/components/layout";
 import {
   useGetMedicalPatient,
   useListMedicalTransportRequests,
   useListRecurringAppointments,
   useListNotifications,
+  useCancelMedicalTransportRequest,
+  getListMedicalTransportRequestsQueryKey,
+  getListNotificationsQueryKey,
 } from "@workspace/api-client-react";
 import type { MedicalPatient, MedicalTransportRequest, RecurringAppointment, NotificationEntry } from "@workspace/api-client-react";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -28,6 +33,8 @@ import {
   AlertCircle,
   ChevronDown,
   ChevronRight,
+  Loader2,
+  Ban,
 } from "lucide-react";
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -53,6 +60,7 @@ function verificationBadge(status: string) {
 function transportStatusBadge(status: string) {
   if (status === "assigned") return <Badge className="bg-green-100 text-green-800 border-green-200 border text-xs">Driver Assigned</Badge>;
   if (status === "completed") return <Badge className="bg-slate-100 text-slate-600 border-slate-200 border text-xs">Completed</Badge>;
+  if (status === "cancelled") return <Badge className="bg-red-100 text-red-700 border-red-200 border text-xs">Cancelled</Badge>;
   return <Badge className="bg-amber-100 text-amber-800 border-amber-200 border text-xs">Pending Assignment</Badge>;
 }
 
@@ -91,10 +99,10 @@ function PatientCard({ patient }: { patient: MedicalPatient }) {
           {verificationBadge(patient.verificationStatus)}
         </div>
       </div>
-      {patient.verificationStatus === "rejected" && patient.rejectionReason && (
+      {patient.verificationStatus === "rejected" && (
         <div className="mt-4 rounded-lg bg-red-50 border border-red-200 p-3 flex gap-2">
           <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
-          <p className="text-sm text-red-800"><strong>Reason:</strong> {patient.rejectionReason}</p>
+          <p className="text-sm text-red-800">Your registration was not approved. Please contact your regional coordinator for more information.</p>
         </div>
       )}
       {patient.verificationStatus === "pending" && (
@@ -125,13 +133,32 @@ function PatientCard({ patient }: { patient: MedicalPatient }) {
   );
 }
 
-function TripCard({ trip }: { trip: MedicalTransportRequest }) {
+function TripCard({ trip, patientId }: { trip: MedicalTransportRequest; patientId: number }) {
+  const [confirming, setConfirming] = useState(false);
+  const [reason, setReason] = useState("");
+  const queryClient = useQueryClient();
+
+  const { mutate: cancelTrip, isPending: cancelling } = useCancelMedicalTransportRequest({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getListMedicalTransportRequestsQueryKey({ patientId }) });
+        queryClient.invalidateQueries({ queryKey: getListNotificationsQueryKey({ recipientType: "patient", recipientId: patientId }) });
+        setConfirming(false);
+        setReason("");
+      },
+    },
+  });
+
   const upcoming = isUpcoming(trip.tripDate);
+  const cancellable = upcoming && trip.status !== "completed" && trip.status !== "cancelled";
+
   return (
-    <div className={`rounded-xl border bg-card p-4 ${!upcoming ? "opacity-70" : ""}`}>
-      <div className="flex items-start gap-3">
-        <div className={`mt-0.5 w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${upcoming ? "bg-teal-50 border border-teal-200" : "bg-muted"}`}>
-          <Car className={`w-4 h-4 ${upcoming ? "text-teal-700" : "text-muted-foreground"}`} />
+    <div className={`rounded-xl border bg-card overflow-hidden ${!upcoming || trip.status === "cancelled" ? "opacity-70" : ""}`}>
+      <div className="p-4 flex items-start gap-3">
+        <div className={`mt-0.5 w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${upcoming && trip.status !== "cancelled" ? "bg-teal-50 border border-teal-200" : "bg-muted"}`}>
+          {trip.status === "cancelled"
+            ? <Ban className="w-4 h-4 text-muted-foreground" />
+            : <Car className={`w-4 h-4 ${upcoming ? "text-teal-700" : "text-muted-foreground"}`} />}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-1">
@@ -143,7 +170,7 @@ function TripCard({ trip }: { trip: MedicalTransportRequest }) {
             <span className="flex items-center gap-1"><CalendarDays className="w-3 h-3" />{formatDate(trip.tripDate)}</span>
             <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{trip.tripTime}</span>
           </div>
-          {trip.assignedDriverName && (
+          {trip.assignedDriverName && trip.status !== "cancelled" && (
             <p className="text-xs text-green-700 font-medium mt-1 flex items-center gap-1">
               <CheckCircle2 className="w-3 h-3" /> Driver: {trip.assignedDriverName}
             </p>
@@ -152,7 +179,67 @@ function TripCard({ trip }: { trip: MedicalTransportRequest }) {
             <p className="text-xs text-amber-700 mt-1">A coordinator will assign a driver shortly.</p>
           )}
         </div>
+        {cancellable && !confirming && (
+          <button
+            onClick={() => setConfirming(true)}
+            className="shrink-0 text-xs text-muted-foreground hover:text-red-600 underline underline-offset-2 transition-colors mt-1"
+          >
+            Cancel booking
+          </button>
+        )}
       </div>
+
+      {/* Inline cancel confirmation */}
+      {confirming && (
+        <div className="border-t bg-red-50 border-red-100 p-4 space-y-3">
+          <div className="flex items-start gap-2">
+            <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-semibold text-red-900">Cancel this booking?</p>
+              <p className="text-xs text-red-700 mt-0.5">
+                This will free your assigned driver and send cancellation notices.
+                {trip.assignedDriverName && ` ${trip.assignedDriverName} will be notified.`}
+              </p>
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-red-800 mb-1.5">
+              Reason for cancelling <span className="font-normal text-red-600">(required)</span>
+            </label>
+            <Textarea
+              placeholder="e.g. Appointment rescheduled, no longer need transport…"
+              value={reason}
+              onChange={e => setReason(e.target.value)}
+              rows={2}
+              className="text-sm resize-none bg-white border-red-200 focus-visible:ring-red-400"
+            />
+          </div>
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="destructive"
+              disabled={cancelling || reason.trim().length < 5}
+              onClick={() => cancelTrip({ id: trip.id, data: { reason: reason.trim() } })}
+              className="gap-1.5"
+            >
+              {cancelling
+                ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Cancelling…</>
+                : <><Ban className="w-3.5 h-3.5" /> Confirm cancellation</>}
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled={cancelling}
+              onClick={() => { setConfirming(false); setReason(""); }}
+            >
+              Keep booking
+            </Button>
+          </div>
+          {reason.trim().length > 0 && reason.trim().length < 5 && (
+            <p className="text-xs text-red-600">Please enter at least 5 characters.</p>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -256,19 +343,23 @@ export default function PatientPortal() {
 
   const { data: patient, isLoading: patientLoading, isError: patientError } = useGetMedicalPatient(
     patientId ?? 0,
-    { query: { enabled: patientId !== null } }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    { query: { enabled: patientId !== null } as any }
   );
   const { data: trips, isLoading: tripsLoading } = useListMedicalTransportRequests(
     patientId !== null ? { patientId } : undefined,
-    { query: { enabled: patientId !== null } }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    { query: { enabled: patientId !== null } as any }
   );
   const { data: appointments, isLoading: apptsLoading } = useListRecurringAppointments(
     patientId !== null ? { patientId } : undefined,
-    { query: { enabled: patientId !== null } }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    { query: { enabled: patientId !== null } as any }
   );
   const { data: notifications, isLoading: notifsLoading } = useListNotifications(
     patientId !== null ? { recipientType: "patient", recipientId: patientId } : undefined,
-    { query: { enabled: patientId !== null } }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    { query: { enabled: patientId !== null } as any }
   );
 
   function handleSearch(e: React.FormEvent) {
@@ -405,7 +496,7 @@ export default function PatientPortal() {
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    {upcomingTrips.map(t => <TripCard key={t.id} trip={t} />)}
+                    {upcomingTrips.map(t => <TripCard key={t.id} trip={t} patientId={patient.id} />)}
                   </div>
                 )}
               </section>
@@ -456,7 +547,7 @@ export default function PatientPortal() {
                       Past Trips ({pastTrips.length})
                     </summary>
                     <div className="space-y-2">
-                      {pastTrips.map(t => <TripCard key={t.id} trip={t} />)}
+                      {pastTrips.map(t => <TripCard key={t.id} trip={t} patientId={patient.id} />)}
                     </div>
                   </details>
                 </section>

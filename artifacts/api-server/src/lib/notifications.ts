@@ -140,6 +140,72 @@ interface NotifyTripCompletedArgs {
   destinationName: string;
 }
 
+interface NotifyTripCancelledArgs {
+  patientId: number;
+  patientName: string;
+  patientPhone: string;
+  driverId: number | null;
+  driverName: string | null;
+  tripDate: string;
+  destinationName: string;
+  reason: string;
+}
+
+export async function notifyTripCancelled(args: NotifyTripCancelledArgs) {
+  const promises: Promise<unknown>[] = [];
+
+  // Always notify the patient with a confirmation
+  promises.push(
+    db.insert(notificationsTable).values({
+      recipientType: "patient",
+      recipientId: args.patientId,
+      recipientName: args.patientName,
+      recipientPhone: args.patientPhone,
+      event: "trip_cancelled" as NotificationEvent,
+      subject: "Your medical transport booking has been cancelled",
+      message: `Hi ${args.patientName},
+
+Your medical transport booking to ${args.destinationName} on ${args.tripDate} has been cancelled.
+
+Reason provided: ${args.reason}
+
+If you still need transport, please book again via the Medical Transport section. If you need urgent assistance, contact your regional coordinator.
+
+Regional Carpool Medical Transport Team`,
+    })
+  );
+
+  // Notify the driver if one was assigned
+  if (args.driverId && args.driverName) {
+    promises.push(
+      db.insert(notificationsTable).values({
+        recipientType: "driver",
+        recipientId: args.driverId,
+        recipientName: args.driverName,
+        recipientPhone: "",
+        event: "trip_cancelled" as NotificationEvent,
+        subject: `Trip cancellation — ${args.tripDate} to ${args.destinationName}`,
+        message: `Hi ${args.driverName},
+
+A transport booking assigned to you has been cancelled by the patient.
+
+Trip details:
+  Date: ${args.tripDate}
+  Destination: ${args.destinationName}
+  Patient: ${args.patientName}
+
+Reason: ${args.reason}
+
+No further action is needed for this trip. Your coordinator will be in touch if anything changes.
+
+Regional Carpool Medical Transport Team`,
+      })
+    );
+  }
+
+  await Promise.all(promises);
+}
+
 export async function notifyTripCompleted(args: NotifyTripCompletedArgs) {
   await db.insert(notificationsTable).values({
     recipientType: "patient",

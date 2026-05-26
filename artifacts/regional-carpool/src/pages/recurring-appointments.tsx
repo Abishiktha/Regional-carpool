@@ -381,7 +381,8 @@ export default function RecurringAppointments() {
 
   const { data: appointments, isLoading, isFetched } = useListRecurringAppointments(
     patientId !== null ? { patientId } : undefined,
-    { query: { enabled: patientId !== null } }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    { query: { enabled: patientId !== null } as any }
   );
 
   const deactivate = useDeleteRecurringAppointment();

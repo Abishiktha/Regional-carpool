@@ -100,10 +100,10 @@ function DriverCard({ driver }: { driver: MedicalDriver }) {
         <div className="shrink-0">{verificationBadge(driver.verificationStatus)}</div>
       </div>
 
-      {driver.verificationStatus === "rejected" && driver.rejectionReason && (
+      {driver.verificationStatus === "rejected" && (
         <div className="mb-4 rounded-lg bg-red-50 border border-red-200 p-3 flex gap-2">
           <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
-          <p className="text-sm text-red-800"><strong>Reason:</strong> {driver.rejectionReason}</p>
+          <p className="text-sm text-red-800">Your registration was not approved. Please contact your regional coordinator for more information.</p>
         </div>
       )}
 
@@ -134,17 +134,17 @@ function DriverCard({ driver }: { driver: MedicalDriver }) {
       </div>
 
       <div className="mt-3 flex flex-wrap gap-2">
-        {driver.hasPoliceCheck && (
+        {driver.policeCheckDone && (
           <span className="inline-flex items-center gap-1.5 text-xs bg-green-50 text-green-700 border border-green-200 rounded-full px-2.5 py-1">
             <Shield className="w-3 h-3" /> Police Check
           </span>
         )}
-        {driver.hasWwvpCheck && (
+        {driver.workingWithChildrenCheck && (
           <span className="inline-flex items-center gap-1.5 text-xs bg-green-50 text-green-700 border border-green-200 rounded-full px-2.5 py-1">
-            <Shield className="w-3 h-3" /> WWVP Check
+            <Shield className="w-3 h-3" /> Working with Children
           </span>
         )}
-        {driver.isWheelchairAccessible && (
+        {driver.hasWheelchairAccess && (
           <span className="inline-flex items-center gap-1.5 text-xs bg-blue-50 text-blue-700 border border-blue-200 rounded-full px-2.5 py-1">
             <Accessibility className="w-3 h-3" /> Wheelchair Accessible
           </span>
@@ -501,7 +501,7 @@ function EarningsSummary({ trips }: { trips: MedicalTransportRequest[] }) {
                   </span>
                   <span className="text-center">
                     {t.returnTrip
-                      ? <RotateCcw className="w-3.5 h-3.5 text-blue-500 mx-auto" title="Includes return" />
+                      ? <RotateCcw className="w-3.5 h-3.5 text-blue-500 mx-auto" aria-label="Includes return" />
                       : <span className="text-xs text-muted-foreground">—</span>}
                   </span>
                   <span className="text-right">
@@ -550,15 +550,18 @@ export default function DriverPortal() {
 
   const { data: driver, isLoading: driverLoading, isError: driverError } = useGetMedicalDriver(
     driverId ?? 0,
-    { query: { enabled: driverId !== null } }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    { query: { enabled: driverId !== null } as any }
   );
   const { data: trips, isLoading: tripsLoading } = useListMedicalTransportRequests(
     driverId !== null ? { assignedDriverId: driverId } : undefined,
-    { query: { enabled: driverId !== null } }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    { query: { enabled: driverId !== null } as any }
   );
   const { data: notifications, isLoading: notifsLoading } = useListNotifications(
     driverId !== null ? { recipientType: "driver", recipientId: driverId } : undefined,
-    { query: { enabled: driverId !== null } }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    { query: { enabled: driverId !== null } as any }
   );
 
   function handleSearch(e: React.FormEvent) {
