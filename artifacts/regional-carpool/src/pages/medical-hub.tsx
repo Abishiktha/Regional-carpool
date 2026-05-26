@@ -99,20 +99,20 @@ export default function MedicalHub() {
         </div>
       </div>
 
-      <div className="rounded-xl border bg-muted/50 p-4 mb-6 flex flex-col sm:flex-row sm:items-center gap-3">
+      <div className="rounded-xl border bg-teal-50 border-teal-200 p-5 mb-6 flex flex-col sm:flex-row sm:items-center gap-4">
         <div className="flex items-start gap-3 flex-1">
-          <div className="mt-0.5 rounded-full bg-slate-100 p-2 shrink-0 border">
-            <Bell className="w-4 h-4 text-slate-500" />
+          <div className="mt-0.5 rounded-full bg-teal-100 p-2.5 shrink-0 border border-teal-200">
+            <UserCheck className="w-5 h-5 text-teal-700" />
           </div>
           <div>
-            <p className="font-semibold text-sm text-foreground">Check your messages</p>
-            <p className="text-xs text-muted-foreground mt-0.5">See updates about your registration approval and transport booking — including when a driver has been assigned to your trip.</p>
+            <p className="font-bold text-sm text-teal-900">Already registered? Access your patient dashboard</p>
+            <p className="text-xs text-teal-700 mt-0.5">View your registration status, upcoming trips, recurring appointments, and messages — all in one place.</p>
           </div>
         </div>
-        <Link href="/medical/messages">
-          <Button size="sm" variant="outline" className="shrink-0 w-full sm:w-auto" data-testid="btn-my-messages">
-            <Bell className="w-3.5 h-3.5 mr-1.5" />
-            My Messages
+        <Link href="/medical/portal">
+          <Button size="sm" className="bg-teal-700 hover:bg-teal-800 text-white shrink-0 w-full sm:w-auto" data-testid="btn-patient-portal">
+            My Dashboard
+            <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
           </Button>
         </Link>
       </div>

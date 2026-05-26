@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { HeartPulse, ShieldCheck } from "lucide-react";
+import { HeartPulse, ShieldCheck, UserCircle2 } from "lucide-react";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
@@ -28,11 +28,19 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </Link>
             <Link
               href="/medical"
-              className={`text-sm font-medium px-3 py-1.5 rounded-md transition-colors flex items-center gap-1.5 ${isMedical ? "text-teal-700 bg-teal-50" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
+              className={`text-sm font-medium px-3 py-1.5 rounded-md transition-colors flex items-center gap-1.5 ${isMedical && location !== "/medical/portal" ? "text-teal-700 bg-teal-50" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
               data-testid="nav-medical"
             >
               <HeartPulse className="w-3.5 h-3.5" />
-              Medical Transport
+              Medical
+            </Link>
+            <Link
+              href="/medical/portal"
+              className={`text-sm font-medium px-3 py-1.5 rounded-md transition-colors flex items-center gap-1.5 ${location === "/medical/portal" ? "text-teal-700 bg-teal-50" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
+              data-testid="nav-portal"
+            >
+              <UserCircle2 className="w-3.5 h-3.5" />
+              My Dashboard
             </Link>
             <Link
               href="/admin"
