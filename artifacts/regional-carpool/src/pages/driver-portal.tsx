@@ -1,0 +1,498 @@
+import { useState } from "react";
+import { Link } from "wouter";
+import { Layout } from "@/components/layout";
+import {
+  useGetMedicalDriver,
+  useListMedicalTransportRequests,
+  useListNotifications,
+} from "@workspace/api-client-react";
+import type { MedicalDriver, MedicalTransportRequest, NotificationEntry } from "@workspace/api-client-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Search,
+  Car,
+  CheckCircle2,
+  Clock,
+  XCircle,
+  CalendarDays,
+  MapPin,
+  User,
+  Phone,
+  AlertCircle,
+  Bell,
+  ChevronDown,
+  ChevronRight,
+  Accessibility,
+  ArrowRight,
+  ClipboardList,
+  Shield,
+} from "lucide-react";
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+function verificationBadge(status: string) {
+  if (status === "approved") return (
+    <span className="inline-flex items-center gap-1.5 bg-green-100 text-green-800 border border-green-200 rounded-full px-3 py-1 text-sm font-semibold">
+      <CheckCircle2 className="w-4 h-4" /> Verified Driver
+    </span>
+  );
+  if (status === "rejected") return (
+    <span className="inline-flex items-center gap-1.5 bg-red-100 text-red-800 border border-red-200 rounded-full px-3 py-1 text-sm font-semibold">
+      <XCircle className="w-4 h-4" /> Registration Rejected
+    </span>
+  );
+  return (
+    <span className="inline-flex items-center gap-1.5 bg-amber-100 text-amber-800 border border-amber-200 rounded-full px-3 py-1 text-sm font-semibold">
+      <Clock className="w-4 h-4" /> Pending Verification
+    </span>
+  );
+}
+
+function tripStatusBadge(status: string) {
+  if (status === "assigned") return <Badge className="bg-teal-100 text-teal-800 border-teal-200 border text-xs">Active — Assigned to you</Badge>;
+  if (status === "completed") return <Badge className="bg-slate-100 text-slate-600 border-slate-200 border text-xs">Completed</Badge>;
+  return <Badge className="bg-amber-100 text-amber-800 border-amber-200 border text-xs">Pending</Badge>;
+}
+
+function isUpcoming(tripDate: string) {
+  return new Date(tripDate + "T00:00:00") >= new Date(new Date().toDateString());
+}
+
+function formatDate(dateStr: string) {
+  return new Date(dateStr + "T00:00:00").toLocaleDateString("en-AU", {
+    weekday: "long", day: "numeric", month: "long", year: "numeric",
+  });
+}
+
+function formatDateShort(dateStr: string) {
+  return new Date(dateStr + "T00:00:00").toLocaleDateString("en-AU", {
+    weekday: "short", day: "numeric", month: "short",
+  });
+}
+
+// ── Driver card ──────────────────────────────────────────────────────────────
+
+function DriverCard({ driver }: { driver: MedicalDriver }) {
+  return (
+    <div className="rounded-2xl border bg-card p-6 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-start gap-4 mb-5">
+        <div className="w-14 h-14 rounded-full bg-primary/10 border-2 border-primary/20 flex items-center justify-center shrink-0">
+          <Car className="w-7 h-7 text-primary" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h2 className="text-xl font-bold text-foreground">{driver.fullName}</h2>
+          <p className="text-sm text-muted-foreground flex items-center gap-1 mt-0.5">
+            <Phone className="w-3.5 h-3.5" />{driver.phone}
+          </p>
+        </div>
+        <div className="shrink-0">{verificationBadge(driver.verificationStatus)}</div>
+      </div>
+
+      {driver.verificationStatus === "rejected" && driver.rejectionReason && (
+        <div className="mb-4 rounded-lg bg-red-50 border border-red-200 p-3 flex gap-2">
+          <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+          <p className="text-sm text-red-800"><strong>Reason:</strong> {driver.rejectionReason}</p>
+        </div>
+      )}
+
+      {driver.verificationStatus === "pending" && (
+        <div className="mb-4 rounded-lg bg-amber-50 border border-amber-200 p-3 flex gap-2">
+          <Clock className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+          <p className="text-sm text-amber-800">Your registration is under review. A coordinator will contact you once your checks are verified. This typically takes 3–5 business days.</p>
+        </div>
+      )}
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="rounded-lg bg-muted p-3">
+          <p className="text-xs text-muted-foreground mb-0.5">Driver ID</p>
+          <p className="font-bold text-foreground">#{driver.id}</p>
+        </div>
+        <div className="rounded-lg bg-muted p-3">
+          <p className="text-xs text-muted-foreground mb-0.5">Vehicle</p>
+          <p className="font-semibold text-foreground text-sm">{driver.vehicleType}</p>
+        </div>
+        <div className="rounded-lg bg-muted p-3">
+          <p className="text-xs text-muted-foreground mb-0.5">Rego</p>
+          <p className="font-semibold text-foreground text-sm font-mono">{driver.vehicleRego}</p>
+        </div>
+        <div className="rounded-lg bg-muted p-3">
+          <p className="text-xs text-muted-foreground mb-0.5">Seats</p>
+          <p className="font-semibold text-foreground text-sm">{driver.vehicleCapacity} passengers</p>
+        </div>
+      </div>
+
+      <div className="mt-3 flex flex-wrap gap-2">
+        {driver.hasPoliceCheck && (
+          <span className="inline-flex items-center gap-1.5 text-xs bg-green-50 text-green-700 border border-green-200 rounded-full px-2.5 py-1">
+            <Shield className="w-3 h-3" /> Police Check
+          </span>
+        )}
+        {driver.hasWwvpCheck && (
+          <span className="inline-flex items-center gap-1.5 text-xs bg-green-50 text-green-700 border border-green-200 rounded-full px-2.5 py-1">
+            <Shield className="w-3 h-3" /> WWVP Check
+          </span>
+        )}
+        {driver.isWheelchairAccessible && (
+          <span className="inline-flex items-center gap-1.5 text-xs bg-blue-50 text-blue-700 border border-blue-200 rounded-full px-2.5 py-1">
+            <Accessibility className="w-3 h-3" /> Wheelchair Accessible
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Trip card ────────────────────────────────────────────────────────────────
+
+function TripCard({ trip }: { trip: MedicalTransportRequest }) {
+  const [open, setOpen] = useState(false);
+  const upcoming = isUpcoming(trip.tripDate);
+
+  return (
+    <div className={`rounded-xl border bg-card overflow-hidden ${!upcoming ? "opacity-70" : ""}`}>
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full text-left p-4 flex items-start gap-3 hover:bg-muted/40 transition-colors"
+      >
+        <div className={`mt-0.5 w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${upcoming ? "bg-teal-50 border border-teal-200" : "bg-muted border"}`}>
+          <Car className={`w-5 h-5 ${upcoming ? "text-teal-700" : "text-muted-foreground"}`} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap mb-1">
+            {tripStatusBadge(trip.status)}
+            {trip.returnTrip && <Badge className="bg-blue-50 text-blue-700 border-blue-200 border text-xs">Return trip</Badge>}
+          </div>
+          <p className="font-semibold text-foreground text-sm">{trip.patientName}</p>
+          <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
+            <MapPin className="w-3 h-3 shrink-0" />
+            <span>{trip.pickupSuburb} → {trip.destinationName}</span>
+          </div>
+          <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
+            <span className="flex items-center gap-1"><CalendarDays className="w-3 h-3" />{formatDateShort(trip.tripDate)}</span>
+            <span className="flex items-center gap-1"><Clock className="w-3 h-3" />Pickup {trip.tripTime}</span>
+          </div>
+        </div>
+        {open ? <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0 mt-1" /> : <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0 mt-1" />}
+      </button>
+
+      {open && (
+        <div className="border-t bg-muted/30 p-4 space-y-4">
+          {/* Trip details */}
+          <div>
+            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Trip Details</h4>
+            <div className="grid sm:grid-cols-2 gap-2">
+              <div className="rounded-lg bg-card border p-3">
+                <p className="text-xs text-muted-foreground mb-0.5">Date</p>
+                <p className="text-sm font-semibold text-foreground">{formatDate(trip.tripDate)}</p>
+              </div>
+              <div className="rounded-lg bg-card border p-3">
+                <p className="text-xs text-muted-foreground mb-0.5">Pickup time</p>
+                <p className="text-sm font-semibold text-foreground">{trip.tripTime}</p>
+              </div>
+              {trip.returnTrip && trip.returnTime && (
+                <div className="rounded-lg bg-card border p-3">
+                  <p className="text-xs text-muted-foreground mb-0.5">Return pickup (approx.)</p>
+                  <p className="text-sm font-semibold text-foreground">{trip.returnTime}</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Pickup address */}
+          <div>
+            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Pickup Address</h4>
+            <div className="rounded-lg bg-card border p-3 flex items-start gap-2">
+              <MapPin className="w-4 h-4 text-teal-700 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold text-foreground">{trip.pickupAddress}</p>
+                <p className="text-sm text-muted-foreground">{trip.pickupSuburb}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Destination */}
+          <div>
+            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Destination</h4>
+            <div className="rounded-lg bg-card border p-3 flex items-start gap-2">
+              <MapPin className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold text-foreground">{trip.destinationName}</p>
+                <p className="text-sm text-muted-foreground">{trip.destinationAddress}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Patient contact */}
+          <div>
+            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Patient</h4>
+            <div className="rounded-lg bg-card border p-3 flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0">
+                <User className="w-4 h-4 text-muted-foreground" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-foreground">{trip.patientName}</p>
+                <p className="text-xs text-muted-foreground">Patient #{trip.patientId}</p>
+              </div>
+            </div>
+          </div>
+
+          {trip.notes && (
+            <div>
+              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Notes</h4>
+              <p className="text-sm text-foreground bg-card border rounded-lg p-3">{trip.notes}</p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Notification row ─────────────────────────────────────────────────────────
+
+function NotifRow({ n }: { n: NotificationEntry }) {
+  const [open, setOpen] = useState(false);
+  const date = new Date(n.createdAt);
+  const dateStr = date.toLocaleDateString("en-AU", { day: "numeric", month: "short" });
+  const timeStr = date.toLocaleTimeString("en-AU", { hour: "2-digit", minute: "2-digit" });
+  const eventColor = n.event.includes("approved") ? "text-green-700" : n.event.includes("rejected") ? "text-red-600" : "text-teal-700";
+
+  return (
+    <div className="border-b last:border-0 py-3">
+      <button className="w-full text-left flex items-start gap-3" onClick={() => setOpen(!open)}>
+        <Bell className={`w-4 h-4 shrink-0 mt-0.5 ${eventColor}`} />
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-foreground leading-tight">{n.subject}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">{dateStr} at {timeStr}</p>
+        </div>
+        {open ? <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" /> : <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />}
+      </button>
+      {open && (
+        <div className="ml-7 mt-2 rounded-lg bg-muted p-3">
+          <pre className="text-xs text-foreground whitespace-pre-wrap font-sans leading-relaxed">{n.message}</pre>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Stats bar ────────────────────────────────────────────────────────────────
+
+function StatsBar({ trips }: { trips: MedicalTransportRequest[] }) {
+  const upcoming = trips.filter(t => t.status === "assigned" && isUpcoming(t.tripDate));
+  const completed = trips.filter(t => t.status === "completed" || (!isUpcoming(t.tripDate) && t.status === "assigned"));
+  const returnTrips = trips.filter(t => t.returnTrip && isUpcoming(t.tripDate));
+
+  return (
+    <div className="grid grid-cols-3 gap-3 mb-8">
+      <div className="rounded-xl border bg-card p-4 text-center">
+        <div className="text-2xl font-bold text-teal-700">{upcoming.length}</div>
+        <div className="text-xs text-muted-foreground mt-0.5">Upcoming trips</div>
+      </div>
+      <div className="rounded-xl border bg-card p-4 text-center">
+        <div className="text-2xl font-bold text-blue-600">{returnTrips.length}</div>
+        <div className="text-xs text-muted-foreground mt-0.5">With return trip</div>
+      </div>
+      <div className="rounded-xl border bg-card p-4 text-center">
+        <div className="text-2xl font-bold text-slate-500">{completed.length}</div>
+        <div className="text-xs text-muted-foreground mt-0.5">Trips completed</div>
+      </div>
+    </div>
+  );
+}
+
+// ── Main page ────────────────────────────────────────────────────────────────
+
+export default function DriverPortal() {
+  const [idInput, setIdInput] = useState("");
+  const [driverId, setDriverId] = useState<number | null>(null);
+
+  const { data: driver, isLoading: driverLoading, isError: driverError } = useGetMedicalDriver(
+    driverId ?? 0,
+    { query: { enabled: driverId !== null } }
+  );
+  const { data: trips, isLoading: tripsLoading } = useListMedicalTransportRequests(
+    driverId !== null ? { assignedDriverId: driverId } : undefined,
+    { query: { enabled: driverId !== null } }
+  );
+  const { data: notifications, isLoading: notifsLoading } = useListNotifications(
+    driverId !== null ? { recipientType: "driver", recipientId: driverId } : undefined,
+    { query: { enabled: driverId !== null } }
+  );
+
+  function handleSearch(e: React.FormEvent) {
+    e.preventDefault();
+    const id = parseInt(idInput.trim(), 10);
+    if (!isNaN(id) && id > 0) setDriverId(id);
+  }
+
+  const upcomingTrips = (trips ?? [])
+    .filter(t => t.status === "assigned" && isUpcoming(t.tripDate))
+    .sort((a, b) => a.tripDate.localeCompare(b.tripDate));
+
+  const pastTrips = (trips ?? [])
+    .filter(t => t.status === "completed" || (!isUpcoming(t.tripDate) && t.status === "assigned"))
+    .sort((a, b) => b.tripDate.localeCompare(a.tripDate));
+
+  const recentNotifs = [...(notifications ?? [])].sort((a, b) =>
+    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+
+  const isDataLoading = driverLoading || tripsLoading || notifsLoading;
+
+  return (
+    <Layout>
+      <div className="mb-6">
+        <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-primary bg-primary/10 border border-primary/20 rounded-full px-3 py-1 mb-4">
+          <Car className="w-3.5 h-3.5" />
+          Driver Portal
+        </div>
+        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">My Driver Dashboard</h1>
+        <p className="text-muted-foreground mt-1">
+          View your registration status, upcoming trips, and full patient/pickup details for each booking.
+        </p>
+      </div>
+
+      {/* ID lookup */}
+      <form onSubmit={handleSearch} className="rounded-2xl border bg-card p-6 mb-8">
+        <label className="block text-sm font-semibold text-foreground mb-2">Enter your Driver ID to access your dashboard</label>
+        <div className="flex gap-2">
+          <Input
+            placeholder="Driver ID number (e.g. 3)"
+            value={idInput}
+            onChange={e => setIdInput(e.target.value)}
+            type="number"
+            min="1"
+            className="flex-1"
+          />
+          <Button type="submit" className="shrink-0">
+            <Search className="w-4 h-4 mr-1.5" />
+            View Dashboard
+          </Button>
+        </div>
+        <p className="text-xs text-muted-foreground mt-2">
+          Your Driver ID was shown on screen when you completed your registration.{" "}
+          <Link href="/medical/register/driver" className="text-primary underline underline-offset-2">Register as a driver</Link> if you haven't yet.
+        </p>
+      </form>
+
+      {driverId !== null && (
+        <>
+          {isDataLoading ? (
+            <div className="space-y-4">
+              <Skeleton className="h-48 w-full rounded-2xl" />
+              <div className="grid grid-cols-3 gap-3">
+                {[1,2,3].map(i => <Skeleton key={i} className="h-20 rounded-xl" />)}
+              </div>
+              {[1,2].map(i => <Skeleton key={i} className="h-24 w-full rounded-xl" />)}
+            </div>
+          ) : driverError || !driver ? (
+            <div className="rounded-xl border bg-card p-10 text-center text-muted-foreground">
+              <AlertCircle className="w-8 h-8 mx-auto mb-3 opacity-30" />
+              <p className="font-medium">Driver not found</p>
+              <p className="text-sm mt-1">No driver registered with ID #{driverId}. Please check your ID and try again.</p>
+            </div>
+          ) : (
+            <>
+              <DriverCard driver={driver} />
+
+              {driver.verificationStatus === "approved" && (
+                <>
+                  <StatsBar trips={trips ?? []} />
+
+                  {/* Upcoming trips */}
+                  <section className="mb-8">
+                    <h3 className="text-base font-bold text-foreground mb-3 flex items-center gap-2">
+                      <CalendarDays className="w-4 h-4 text-teal-700" />
+                      Upcoming Trips
+                      {upcomingTrips.length > 0 && (
+                        <span className="ml-1 bg-teal-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                          {upcomingTrips.length}
+                        </span>
+                      )}
+                    </h3>
+                    {upcomingTrips.length === 0 ? (
+                      <div className="rounded-xl border bg-card p-8 text-center text-muted-foreground">
+                        <ClipboardList className="w-7 h-7 mx-auto mb-2 opacity-30" />
+                        <p className="text-sm font-medium">No upcoming trips assigned yet</p>
+                        <p className="text-sm mt-1">A coordinator will assign trips to you when patients in your area need transport. You'll receive a notification when that happens.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {upcomingTrips.map(t => <TripCard key={t.id} trip={t} />)}
+                      </div>
+                    )}
+                  </section>
+
+                  {/* Guidance for active drivers */}
+                  {upcomingTrips.length > 0 && (
+                    <div className="rounded-xl border bg-amber-50 border-amber-200 p-4 flex gap-3 mb-8">
+                      <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                      <div className="text-sm text-amber-800">
+                        <strong>Trip reminders: </strong>
+                        Arrive at the pickup address 5–10 minutes early. If there are any issues on the day, contact your regional coordinator as soon as possible. Patient details are shown when you expand each trip above.
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Messages */}
+                  <section className="mb-8">
+                    <h3 className="text-base font-bold text-foreground mb-3 flex items-center gap-2">
+                      <Bell className="w-4 h-4 text-slate-500" />
+                      Messages
+                      {recentNotifs.length > 0 && (
+                        <span className="text-xs text-muted-foreground font-normal ml-1">{recentNotifs.length} total</span>
+                      )}
+                    </h3>
+                    {recentNotifs.length === 0 ? (
+                      <div className="rounded-xl border bg-card p-6 text-center text-muted-foreground">
+                        <Bell className="w-7 h-7 mx-auto mb-2 opacity-30" />
+                        <p className="text-sm font-medium">No messages yet</p>
+                        <p className="text-xs mt-1">You'll receive messages here when your registration is reviewed or a trip is assigned to you.</p>
+                      </div>
+                    ) : (
+                      <div className="rounded-xl border bg-card px-4 divide-y">
+                        {recentNotifs.map(n => <NotifRow key={n.id} n={n} />)}
+                      </div>
+                    )}
+                  </section>
+
+                  {/* Past trips */}
+                  {pastTrips.length > 0 && (
+                    <section className="mb-8">
+                      <details className="group">
+                        <summary className="cursor-pointer flex items-center gap-2 text-sm font-medium text-muted-foreground list-none select-none mb-3">
+                          <ChevronRight className="w-4 h-4 transition-transform group-open:rotate-90" />
+                          Past Trips ({pastTrips.length})
+                        </summary>
+                        <div className="space-y-2">
+                          {pastTrips.map(t => <TripCard key={t.id} trip={t} />)}
+                        </div>
+                      </details>
+                    </section>
+                  )}
+                </>
+              )}
+
+              {/* Not yet approved — show messages only */}
+              {driver.verificationStatus !== "approved" && recentNotifs.length > 0 && (
+                <section className="mb-8">
+                  <h3 className="text-base font-bold text-foreground mb-3 flex items-center gap-2">
+                    <Bell className="w-4 h-4 text-slate-500" />
+                    Messages
+                  </h3>
+                  <div className="rounded-xl border bg-card px-4 divide-y">
+                    {recentNotifs.map(n => <NotifRow key={n.id} n={n} />)}
+                  </div>
+                </section>
+              )}
+            </>
+          )}
+        </>
+      )}
+    </Layout>
+  );
+}

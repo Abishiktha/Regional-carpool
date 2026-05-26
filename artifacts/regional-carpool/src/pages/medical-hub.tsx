@@ -99,22 +99,39 @@ export default function MedicalHub() {
         </div>
       </div>
 
-      <div className="rounded-xl border bg-teal-50 border-teal-200 p-5 mb-6 flex flex-col sm:flex-row sm:items-center gap-4">
-        <div className="flex items-start gap-3 flex-1">
-          <div className="mt-0.5 rounded-full bg-teal-100 p-2.5 shrink-0 border border-teal-200">
-            <UserCheck className="w-5 h-5 text-teal-700" />
+      <div className="grid sm:grid-cols-2 gap-3 mb-6">
+        <div className="rounded-xl border bg-teal-50 border-teal-200 p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="flex items-start gap-3 flex-1">
+            <div className="mt-0.5 rounded-full bg-teal-100 p-2 shrink-0 border border-teal-200">
+              <UserCheck className="w-4 h-4 text-teal-700" />
+            </div>
+            <div>
+              <p className="font-bold text-sm text-teal-900">Patient Dashboard</p>
+              <p className="text-xs text-teal-700 mt-0.5">Upcoming trips, appointments & messages.</p>
+            </div>
           </div>
-          <div>
-            <p className="font-bold text-sm text-teal-900">Already registered? Access your patient dashboard</p>
-            <p className="text-xs text-teal-700 mt-0.5">View your registration status, upcoming trips, recurring appointments, and messages — all in one place.</p>
-          </div>
+          <Link href="/medical/portal">
+            <Button size="sm" className="bg-teal-700 hover:bg-teal-800 text-white w-full sm:w-auto" data-testid="btn-patient-portal">
+              Open <ArrowRight className="w-3.5 h-3.5 ml-1" />
+            </Button>
+          </Link>
         </div>
-        <Link href="/medical/portal">
-          <Button size="sm" className="bg-teal-700 hover:bg-teal-800 text-white shrink-0 w-full sm:w-auto" data-testid="btn-patient-portal">
-            My Dashboard
-            <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
-          </Button>
-        </Link>
+        <div className="rounded-xl border bg-primary/5 border-primary/20 p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="flex items-start gap-3 flex-1">
+            <div className="mt-0.5 rounded-full bg-primary/10 p-2 shrink-0 border border-primary/20">
+              <Car className="w-4 h-4 text-primary" />
+            </div>
+            <div>
+              <p className="font-bold text-sm text-foreground">Driver Dashboard</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Assigned trips, patient details & messages.</p>
+            </div>
+          </div>
+          <Link href="/medical/driver-portal">
+            <Button size="sm" variant="outline" className="border-primary text-primary hover:bg-primary/5 w-full sm:w-auto" data-testid="btn-driver-portal">
+              Open <ArrowRight className="w-3.5 h-3.5 ml-1" />
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <div className="mb-4 flex items-center justify-between">

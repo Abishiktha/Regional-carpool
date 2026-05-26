@@ -450,6 +450,9 @@ paths:
         - name: patientId
           in: query
           schema: { type: integer }
+        - name: assignedDriverId
+          in: query
+          schema: { type: integer }
         - name: status
           in: query
           schema: { type: string }

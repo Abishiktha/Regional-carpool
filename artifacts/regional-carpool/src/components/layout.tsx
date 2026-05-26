@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { HeartPulse, ShieldCheck, UserCircle2 } from "lucide-react";
+import { HeartPulse, ShieldCheck, UserCircle2, Car } from "lucide-react";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
@@ -40,7 +40,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
               data-testid="nav-portal"
             >
               <UserCircle2 className="w-3.5 h-3.5" />
-              My Dashboard
+              Patient
+            </Link>
+            <Link
+              href="/medical/driver-portal"
+              className={`text-sm font-medium px-3 py-1.5 rounded-md transition-colors flex items-center gap-1.5 ${location === "/medical/driver-portal" ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
+              data-testid="nav-driver-portal"
+            >
+              <Car className="w-3.5 h-3.5" />
+              Driver
             </Link>
             <Link
               href="/admin"

@@ -14,10 +14,11 @@ const router = Router();
 
 router.get("/", async (req, res) => {
   const parsed = ListMedicalTransportRequestsQueryParams.safeParse(req.query);
-  const { patientId, status } = parsed.success ? parsed.data : {};
+  const { patientId, assignedDriverId, status } = parsed.success ? parsed.data : {};
 
   const conditions = [];
   if (patientId) conditions.push(eq(medicalTransportRequestsTable.patientId, patientId));
+  if (assignedDriverId) conditions.push(eq(medicalTransportRequestsTable.assignedDriverId, assignedDriverId));
   if (status) conditions.push(eq(medicalTransportRequestsTable.status, status));
 
   const rows = conditions.length

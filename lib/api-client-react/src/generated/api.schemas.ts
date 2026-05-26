@@ -283,6 +283,7 @@ patientId?: number;
 
 export type ListMedicalTransportRequestsParams = {
 patientId?: number;
+assignedDriverId?: number;
 status?: string;
 };
 

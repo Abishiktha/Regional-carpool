@@ -442,6 +442,7 @@ export const DeleteRecurringAppointmentParams = zod.object({
  */
 export const ListMedicalTransportRequestsQueryParams = zod.object({
   "patientId": zod.coerce.number().optional(),
+  "assignedDriverId": zod.coerce.number().optional(),
   "status": zod.coerce.string().optional()
 })
 

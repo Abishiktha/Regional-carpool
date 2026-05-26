@@ -14,6 +14,7 @@ import Admin from "@/pages/admin";
 import MyMessages from "@/pages/my-messages";
 import RecurringAppointments from "@/pages/recurring-appointments";
 import PatientPortal from "@/pages/patient-portal";
+import DriverPortal from "@/pages/driver-portal";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -38,6 +39,7 @@ function Router() {
       <Route path="/medical/messages" component={MyMessages} />
       <Route path="/medical/appointments" component={RecurringAppointments} />
       <Route path="/medical/portal" component={PatientPortal} />
+      <Route path="/medical/driver-portal" component={DriverPortal} />
       <Route component={NotFound} />
     </Switch>
   );
