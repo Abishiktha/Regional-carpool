@@ -34,6 +34,10 @@ import {
   Shield,
   Flag,
   Loader2,
+  TrendingUp,
+  BarChart3,
+  Info,
+  RotateCcw,
 } from "lucide-react";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -340,6 +344,179 @@ function NotifRow({ n }: { n: NotificationEntry }) {
   );
 }
 
+// ── Earnings summary ─────────────────────────────────────────────────────────
+
+function getMonthKey(dateStr: string) {
+  const d = new Date(dateStr + "T00:00:00");
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function getMonthLabel(key: string) {
+  const [y, m] = key.split("-");
+  return new Date(Number(y), Number(m) - 1, 1).toLocaleDateString("en-AU", { month: "long", year: "numeric" });
+}
+
+function EarningsSummary({ trips }: { trips: MedicalTransportRequest[] }) {
+  const [showLog, setShowLog] = useState(false);
+
+  const completed = trips.filter(t => t.status === "completed").sort((a, b) => b.tripDate.localeCompare(a.tripDate));
+
+  const thisMonthKey = getMonthKey(new Date().toISOString().slice(0, 10));
+  const thisMonthTrips = completed.filter(t => getMonthKey(t.tripDate) === thisMonthKey);
+
+  // Group by month for the breakdown chart
+  const byMonth: Record<string, MedicalTransportRequest[]> = {};
+  for (const t of completed) {
+    const k = getMonthKey(t.tripDate);
+    if (!byMonth[k]) byMonth[k] = [];
+    byMonth[k].push(t);
+  }
+  const monthKeys = Object.keys(byMonth).sort().reverse().slice(0, 6);
+  const maxInMonth = Math.max(...monthKeys.map(k => byMonth[k].length), 1);
+
+  const returnTripCount = completed.filter(t => t.returnTrip).length;
+
+  if (completed.length === 0) {
+    return (
+      <section className="mb-8">
+        <h3 className="text-base font-bold text-foreground mb-3 flex items-center gap-2">
+          <BarChart3 className="w-4 h-4 text-primary" />
+          Trip Summary &amp; Earnings
+        </h3>
+        <div className="rounded-xl border bg-card p-8 text-center text-muted-foreground">
+          <TrendingUp className="w-7 h-7 mx-auto mb-2 opacity-30" />
+          <p className="text-sm font-medium">No completed trips yet</p>
+          <p className="text-xs mt-1">Your trip history and earnings summary will appear here once you've completed your first trip.</p>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="mb-8">
+      <h3 className="text-base font-bold text-foreground mb-3 flex items-center gap-2">
+        <BarChart3 className="w-4 h-4 text-primary" />
+        Trip Summary &amp; Earnings
+      </h3>
+
+      {/* Summary cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+        <div className="rounded-xl border bg-card p-4">
+          <p className="text-xs text-muted-foreground mb-1">All-time trips</p>
+          <p className="text-2xl font-bold text-foreground">{completed.length}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">completed</p>
+        </div>
+        <div className="rounded-xl border bg-card p-4">
+          <p className="text-xs text-muted-foreground mb-1">This month</p>
+          <p className="text-2xl font-bold text-primary">{thisMonthTrips.length}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">trips completed</p>
+        </div>
+        <div className="rounded-xl border bg-card p-4">
+          <p className="text-xs text-muted-foreground mb-1">Return trips</p>
+          <p className="text-2xl font-bold text-blue-600">{returnTripCount}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">included returns</p>
+        </div>
+        <div className="rounded-xl border bg-card p-4">
+          <p className="text-xs text-muted-foreground mb-1">Active months</p>
+          <p className="text-2xl font-bold text-slate-600">{Object.keys(byMonth).length}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">months driven</p>
+        </div>
+      </div>
+
+      {/* Monthly bar chart */}
+      {monthKeys.length > 1 && (
+        <div className="rounded-xl border bg-card p-4 mb-4">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Trips per month (last 6 months)</p>
+          <div className="flex items-end gap-2 h-20">
+            {monthKeys.map(k => {
+              const count = byMonth[k].length;
+              const heightPct = Math.round((count / maxInMonth) * 100);
+              const isCurrent = k === thisMonthKey;
+              return (
+                <div key={k} className="flex-1 flex flex-col items-center gap-1 min-w-0">
+                  <span className="text-xs font-semibold text-foreground">{count}</span>
+                  <div className="w-full rounded-t-md" style={{ height: `${Math.max(heightPct, 8)}%`, backgroundColor: isCurrent ? "hsl(var(--primary))" : "hsl(var(--muted))", opacity: isCurrent ? 1 : 0.7 }} />
+                  <span className="text-[10px] text-muted-foreground truncate w-full text-center">
+                    {new Date(k + "-01").toLocaleDateString("en-AU", { month: "short" })}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Payment note */}
+      <div className="rounded-xl border bg-blue-50 border-blue-200 p-3 flex gap-2 mb-4">
+        <Info className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+        <p className="text-xs text-blue-800">
+          <strong>Payment is managed by your regional coordinator.</strong> Each completed trip is logged here and reconciled monthly. Contact your coordinator if you have questions about a specific trip payment.
+        </p>
+      </div>
+
+      {/* Per-trip log toggle */}
+      <button
+        onClick={() => setShowLog(!showLog)}
+        className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors mb-3 select-none"
+      >
+        {showLog ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+        View full trip log ({completed.length} trips)
+      </button>
+
+      {showLog && (
+        <div className="rounded-xl border bg-card overflow-hidden">
+          <div className="hidden sm:grid grid-cols-[90px_1fr_140px_80px_90px] gap-3 px-4 py-2 bg-muted border-b text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+            <span>Date</span>
+            <span>Route</span>
+            <span>Patient</span>
+            <span>Return</span>
+            <span className="text-right">Status</span>
+          </div>
+          <div className="divide-y">
+            {completed.map(t => (
+              <div key={t.id} className="px-4 py-3 hover:bg-muted/30 transition-colors">
+                {/* Mobile layout */}
+                <div className="sm:hidden flex justify-between items-start gap-2">
+                  <div className="min-w-0">
+                    <p className="text-xs text-muted-foreground">{formatDateShort(t.tripDate)}</p>
+                    <p className="text-sm font-medium text-foreground truncate">{t.pickupSuburb} → {t.destinationName}</p>
+                    <p className="text-xs text-muted-foreground">{t.patientName.split(" ")[0]} {t.patientName.split(" ").slice(-1)[0]?.[0]}.</p>
+                  </div>
+                  <div className="flex flex-col items-end gap-1 shrink-0">
+                    {t.returnTrip && <RotateCcw className="w-3 h-3 text-blue-500" />}
+                    <span className="text-xs text-green-700 font-medium bg-green-50 border border-green-200 rounded-full px-2 py-0.5">Logged</span>
+                  </div>
+                </div>
+                {/* Desktop layout */}
+                <div className="hidden sm:grid grid-cols-[90px_1fr_140px_80px_90px] gap-3 items-center">
+                  <span className="text-xs text-muted-foreground">{formatDateShort(t.tripDate)}</span>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{t.pickupSuburb}</p>
+                    <p className="text-xs text-muted-foreground truncate flex items-center gap-1">
+                      <ArrowRight className="w-3 h-3 shrink-0" />{t.destinationName}
+                    </p>
+                  </div>
+                  <span className="text-sm text-foreground truncate">
+                    {t.patientName.split(" ")[0]} {t.patientName.split(" ").slice(-1)[0]?.[0]}.
+                  </span>
+                  <span className="text-center">
+                    {t.returnTrip
+                      ? <RotateCcw className="w-3.5 h-3.5 text-blue-500 mx-auto" title="Includes return" />
+                      : <span className="text-xs text-muted-foreground">—</span>}
+                  </span>
+                  <span className="text-right">
+                    <span className="text-xs text-green-700 font-medium bg-green-50 border border-green-200 rounded-full px-2 py-0.5">Logged</span>
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
 // ── Stats bar ────────────────────────────────────────────────────────────────
 
 function StatsBar({ trips }: { trips: MedicalTransportRequest[] }) {
@@ -463,6 +640,8 @@ export default function DriverPortal() {
               {driver.verificationStatus === "approved" && (
                 <>
                   <StatsBar trips={trips ?? []} />
+
+                  <EarningsSummary trips={trips ?? []} />
 
                   {/* Upcoming trips */}
                   <section className="mb-8">
