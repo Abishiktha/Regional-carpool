@@ -1,10 +1,13 @@
 import { useState } from "react";
 import { Link } from "wouter";
+import { useQueryClient } from "@tanstack/react-query";
 import { Layout } from "@/components/layout";
 import {
   useGetMedicalDriver,
   useListMedicalTransportRequests,
   useListNotifications,
+  useCompleteMedicalTransportRequest,
+  getListMedicalTransportRequestsQueryKey,
 } from "@workspace/api-client-react";
 import type { MedicalDriver, MedicalTransportRequest, NotificationEntry } from "@workspace/api-client-react";
 import { Input } from "@/components/ui/input";
@@ -29,6 +32,8 @@ import {
   ArrowRight,
   ClipboardList,
   Shield,
+  Flag,
+  Loader2,
 } from "lucide-react";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -147,9 +152,21 @@ function DriverCard({ driver }: { driver: MedicalDriver }) {
 
 // ── Trip card ────────────────────────────────────────────────────────────────
 
-function TripCard({ trip }: { trip: MedicalTransportRequest }) {
+function TripCard({ trip, driverId }: { trip: MedicalTransportRequest; driverId: number }) {
   const [open, setOpen] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+  const queryClient = useQueryClient();
+  const { mutate: completeTrip, isPending: completing } = useCompleteMedicalTransportRequest({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getListMedicalTransportRequestsQueryKey({ assignedDriverId: driverId }) });
+        setConfirming(false);
+      },
+    },
+  });
+
   const upcoming = isUpcoming(trip.tripDate);
+  const isAssigned = trip.status === "assigned";
 
   return (
     <div className={`rounded-xl border bg-card overflow-hidden ${!upcoming ? "opacity-70" : ""}`}>
@@ -225,7 +242,7 @@ function TripCard({ trip }: { trip: MedicalTransportRequest }) {
             </div>
           </div>
 
-          {/* Patient contact */}
+          {/* Patient */}
           <div>
             <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Patient</h4>
             <div className="rounded-lg bg-card border p-3 flex items-center gap-3">
@@ -243,6 +260,50 @@ function TripCard({ trip }: { trip: MedicalTransportRequest }) {
             <div>
               <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Notes</h4>
               <p className="text-sm text-foreground bg-card border rounded-lg p-3">{trip.notes}</p>
+            </div>
+          )}
+
+          {/* Mark as complete — only for assigned upcoming trips */}
+          {isAssigned && (
+            <div className="pt-1">
+              {!confirming ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-green-300 text-green-700 hover:bg-green-50 gap-1.5"
+                  onClick={() => setConfirming(true)}
+                >
+                  <Flag className="w-3.5 h-3.5" />
+                  Mark trip as completed
+                </Button>
+              ) : (
+                <div className="rounded-xl border border-green-200 bg-green-50 p-4">
+                  <p className="text-sm font-semibold text-green-900 mb-1">Confirm trip completion</p>
+                  <p className="text-xs text-green-800 mb-3">
+                    This will mark the trip as completed and send a thank-you notification to the patient. You can't undo this.
+                  </p>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      className="bg-green-700 hover:bg-green-800 text-white gap-1.5"
+                      disabled={completing}
+                      onClick={() => completeTrip({ id: trip.id })}
+                    >
+                      {completing
+                        ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Saving…</>
+                        : <><CheckCircle2 className="w-3.5 h-3.5" /> Yes, mark as completed</>}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={completing}
+                      onClick={() => setConfirming(false)}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -422,7 +483,7 @@ export default function DriverPortal() {
                       </div>
                     ) : (
                       <div className="space-y-2">
-                        {upcomingTrips.map(t => <TripCard key={t.id} trip={t} />)}
+                        {upcomingTrips.map(t => <TripCard key={t.id} trip={t} driverId={driverId} />)}
                       </div>
                     )}
                   </section>
@@ -469,7 +530,7 @@ export default function DriverPortal() {
                           Past Trips ({pastTrips.length})
                         </summary>
                         <div className="space-y-2">
-                          {pastTrips.map(t => <TripCard key={t.id} trip={t} />)}
+                          {pastTrips.map(t => <TripCard key={t.id} trip={t} driverId={driverId} />)}
                         </div>
                       </details>
                     </section>

@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db, medicalTransportRequestsTable, medicalPatientsTable, medicalDriversTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
-import { notifyDriverAssigned } from "../lib/notifications";
+import { notifyDriverAssigned, notifyTripCompleted } from "../lib/notifications";
 import {
   ListMedicalTransportRequestsQueryParams,
   CreateMedicalTransportRequestBody,
@@ -63,6 +63,46 @@ router.get("/:id", async (req, res) => {
   const [row] = await db.select().from(medicalTransportRequestsTable).where(eq(medicalTransportRequestsTable.id, parsed.data.id));
   if (!row) { res.status(404).json({ error: "Not found" }); return; }
   res.json(fmt(row));
+});
+
+router.post("/:id/complete", async (req, res) => {
+  const parsed = GetMedicalTransportRequestParams.safeParse({ id: Number(req.params.id) });
+  if (!parsed.success) { res.status(400).json({ error: "Invalid id" }); return; }
+
+  const [request] = await db
+    .select()
+    .from(medicalTransportRequestsTable)
+    .where(eq(medicalTransportRequestsTable.id, parsed.data.id));
+
+  if (!request) { res.status(404).json({ error: "Transport request not found" }); return; }
+  if (request.status !== "assigned") {
+    res.status(400).json({ error: "Only assigned trips can be marked as completed" });
+    return;
+  }
+
+  const [updated] = await db
+    .update(medicalTransportRequestsTable)
+    .set({ status: "completed" })
+    .where(eq(medicalTransportRequestsTable.id, request.id))
+    .returning();
+
+  const [patient] = await db
+    .select()
+    .from(medicalPatientsTable)
+    .where(eq(medicalPatientsTable.id, request.patientId));
+
+  if (patient && request.assignedDriverName) {
+    await notifyTripCompleted({
+      patientId: patient.id,
+      patientName: patient.fullName,
+      patientPhone: patient.phone,
+      driverName: request.assignedDriverName,
+      tripDate: request.tripDate,
+      destinationName: request.destinationName,
+    });
+  }
+
+  res.json(fmt(updated));
 });
 
 router.post("/:id/assign", async (req, res) => {

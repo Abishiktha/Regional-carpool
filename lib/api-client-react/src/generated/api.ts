@@ -1936,6 +1936,76 @@ export function useGetMedicalTransportRequest<TData = Awaited<ReturnType<typeof 
 
 
 
+export const getCompleteMedicalTransportRequestUrl = (id: number,) => {
+
+
+
+
+  return `/api/medical/transport-requests/${id}/complete`
+}
+
+/**
+ * @summary Mark a transport request as completed by the driver
+ */
+export const completeMedicalTransportRequest = async (id: number, options?: RequestInit): Promise<MedicalTransportRequest> => {
+
+  return customFetch<MedicalTransportRequest>(getCompleteMedicalTransportRequestUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getCompleteMedicalTransportRequestMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof completeMedicalTransportRequest>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof completeMedicalTransportRequest>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['completeMedicalTransportRequest'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof completeMedicalTransportRequest>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  completeMedicalTransportRequest(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CompleteMedicalTransportRequestMutationResult = NonNullable<Awaited<ReturnType<typeof completeMedicalTransportRequest>>>
+
+    export type CompleteMedicalTransportRequestMutationError = ErrorType<void>
+
+    /**
+ * @summary Mark a transport request as completed by the driver
+ */
+export const useCompleteMedicalTransportRequest = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof completeMedicalTransportRequest>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof completeMedicalTransportRequest>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getCompleteMedicalTransportRequestMutationOptions(options));
+    }
+
 export const getAssignMedicalDriverUrl = (id: number,) => {
 
 

@@ -503,6 +503,28 @@ paths:
         "404":
           description: Not found
 
+  /medical/transport-requests/{id}/complete:
+    post:
+      operationId: completeMedicalTransportRequest
+      tags: [medical-transport]
+      summary: Mark a transport request as completed by the driver
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Trip marked as completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MedicalTransportRequest"
+        "400":
+          description: Trip not in assigned state
+        "404":
+          description: Not found
+
   /medical/transport-requests/{id}/assign:
     post:
       operationId: assignMedicalDriver

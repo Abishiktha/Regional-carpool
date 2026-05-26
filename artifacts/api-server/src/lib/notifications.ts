@@ -5,7 +5,8 @@ export type NotificationEvent =
   | "patient_rejected"
   | "driver_approved"
   | "driver_rejected"
-  | "driver_assigned";
+  | "driver_assigned"
+  | "trip_completed";
 
 interface NotifyPatientApprovedArgs {
   patientId: number;
@@ -125,6 +126,35 @@ We were unable to approve your Regional Carpool driver registration at this time
 Reason: ${args.rejectionReason}
 
 Once the issue has been resolved, you are welcome to resubmit your registration.
+
+Regional Carpool Medical Transport Team`,
+  });
+}
+
+interface NotifyTripCompletedArgs {
+  patientId: number;
+  patientName: string;
+  patientPhone: string;
+  driverName: string;
+  tripDate: string;
+  destinationName: string;
+}
+
+export async function notifyTripCompleted(args: NotifyTripCompletedArgs) {
+  await db.insert(notificationsTable).values({
+    recipientType: "patient",
+    recipientId: args.patientId,
+    recipientName: args.patientName,
+    recipientPhone: args.patientPhone,
+    event: "trip_completed",
+    subject: "Your medical transport trip has been completed",
+    message: `Hi ${args.patientName},
+
+Your medical transport trip on ${args.tripDate} to ${args.destinationName} has been marked as completed by your driver, ${args.driverName}.
+
+We hope your appointment went well. If you have any concerns about this trip, please contact your regional coordinator.
+
+Thank you for using Regional Carpool Medical Transport.
 
 Regional Carpool Medical Transport Team`,
   });
