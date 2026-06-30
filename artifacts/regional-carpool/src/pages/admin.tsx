@@ -29,7 +29,7 @@ import {
 import type { MedicalPatient, MedicalDriver, MedicalTransportRequest, NotificationEntry, VerificationAuditLogEntry } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { ShieldCheck, UserCheck, Car, ClipboardList, CheckCircle2, XCircle, MapPin, CalendarDays, Clock, AlertCircle, Bell, ChevronDown, ChevronRight, History, Search } from "lucide-react";
+import { ShieldCheck, UserCheck, Car, ClipboardList, CheckCircle2, XCircle, MapPin, CalendarDays, Clock, AlertCircle, Bell, ChevronDown, ChevronRight, History, Search, Download } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 function verificationBadge(status: string) {
@@ -728,6 +728,33 @@ function AuditLogRow({ entry }: { entry: VerificationAuditLogEntry }) {
   );
 }
 
+function exportAuditLogCSV(rows: VerificationAuditLogEntry[]) {
+  const header = ["ID", "Type", "Entity ID", "Name", "Decision", "Reason", "Date & Time"];
+  const escape = (v: string | number | null | undefined) => {
+    const s = String(v ?? "");
+    return s.includes(",") || s.includes('"') || s.includes("\n") ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const lines = [
+    header.join(","),
+    ...rows.map(e => [
+      e.id,
+      e.entityType,
+      e.entityId,
+      e.entityName,
+      e.action,
+      e.reason ?? "",
+      new Date(e.decidedAt).toLocaleString("en-AU"),
+    ].map(escape).join(",")),
+  ];
+  const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `verification-audit-log-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 function AuditLogPanel() {
   const [filterType, setFilterType] = useState<"all" | "patient" | "driver">("all");
   const [filterAction, setFilterAction] = useState<"all" | "approved" | "rejected">("all");
@@ -772,7 +799,20 @@ function AuditLogPanel() {
             </SelectContent>
           </Select>
         </div>
-        <span className="text-xs text-muted-foreground ml-auto">{filtered.length} entr{filtered.length !== 1 ? "ies" : "y"}</span>
+        <div className="flex items-center gap-2 ml-auto">
+          <span className="text-xs text-muted-foreground">{filtered.length} entr{filtered.length !== 1 ? "ies" : "y"}</span>
+          {filtered.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs gap-1.5"
+              onClick={() => exportAuditLogCSV(filtered)}
+            >
+              <Download className="w-3.5 h-3.5" />
+              Export CSV
+            </Button>
+          )}
+        </div>
       </div>
 
       {filtered.length === 0 ? (
