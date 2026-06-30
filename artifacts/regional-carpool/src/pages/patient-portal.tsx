@@ -102,7 +102,12 @@ function PatientCard({ patient }: { patient: MedicalPatient }) {
       {patient.verificationStatus === "rejected" && (
         <div className="mt-4 rounded-lg bg-red-50 border border-red-200 p-3 flex gap-2">
           <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
-          <p className="text-sm text-red-800">Your registration was not approved. Please contact your regional coordinator for more information.</p>
+          <div>
+            <p className="text-sm font-semibold text-red-800 mb-0.5">Registration not approved</p>
+            <p className="text-sm text-red-700">
+              {patient.rejectionReason ?? "Please contact your regional coordinator for more information."}
+            </p>
+          </div>
         </div>
       )}
       {patient.verificationStatus === "pending" && (

@@ -230,6 +230,7 @@ export const ListMedicalPatientsResponseItem = zod.object({
   "mobilityNeeds": zod.string(),
   "notes": zod.string().nullish(),
   "verificationStatus": zod.string(),
+  "rejectionReason": zod.string().nullish(),
   "createdAt": zod.string()
 })
 export const ListMedicalPatientsResponse = zod.array(ListMedicalPatientsResponseItem)
@@ -259,6 +260,7 @@ export const GetMedicalPatientResponse = zod.object({
   "mobilityNeeds": zod.string(),
   "notes": zod.string().nullish(),
   "verificationStatus": zod.string(),
+  "rejectionReason": zod.string().nullish(),
   "createdAt": zod.string()
 })
 
@@ -292,6 +294,7 @@ export const VerifyMedicalPatientResponse = zod.object({
   "mobilityNeeds": zod.string(),
   "notes": zod.string().nullish(),
   "verificationStatus": zod.string(),
+  "rejectionReason": zod.string().nullish(),
   "createdAt": zod.string()
 })
 
@@ -328,6 +331,7 @@ export const ListMedicalDriversResponseItem = zod.object({
   "workingWithChildrenCheck": zod.boolean(),
   "policeCheckDone": zod.boolean(),
   "verificationStatus": zod.string(),
+  "rejectionReason": zod.string().nullish(),
   "notes": zod.string().nullish(),
   "createdAt": zod.string()
 })
@@ -353,6 +357,7 @@ export const GetMedicalDriverResponse = zod.object({
   "workingWithChildrenCheck": zod.boolean(),
   "policeCheckDone": zod.boolean(),
   "verificationStatus": zod.string(),
+  "rejectionReason": zod.string().nullish(),
   "notes": zod.string().nullish(),
   "createdAt": zod.string()
 })
@@ -382,6 +387,7 @@ export const VerifyMedicalDriverResponse = zod.object({
   "workingWithChildrenCheck": zod.boolean(),
   "policeCheckDone": zod.boolean(),
   "verificationStatus": zod.string(),
+  "rejectionReason": zod.string().nullish(),
   "notes": zod.string().nullish(),
   "createdAt": zod.string()
 })

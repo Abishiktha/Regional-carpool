@@ -840,6 +840,8 @@ components:
           type: ["string", "null"]
         verificationStatus:
           type: string
+        rejectionReason:
+          type: ["string", "null"]
         createdAt:
           type: string
 
@@ -902,6 +904,8 @@ components:
           type: boolean
         verificationStatus:
           type: string
+        rejectionReason:
+          type: ["string", "null"]
         notes:
           type: ["string", "null"]
         createdAt:

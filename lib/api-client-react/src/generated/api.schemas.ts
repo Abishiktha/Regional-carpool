@@ -125,6 +125,8 @@ export interface MedicalPatient {
   /** @nullable */
   notes?: string | null;
   verificationStatus: string;
+  /** @nullable */
+  rejectionReason?: string | null;
   createdAt: string;
 }
 
@@ -157,6 +159,8 @@ export interface MedicalDriver {
   workingWithChildrenCheck: boolean;
   policeCheckDone: boolean;
   verificationStatus: string;
+  /** @nullable */
+  rejectionReason?: string | null;
   /** @nullable */
   notes?: string | null;
   createdAt: string;

@@ -19,6 +19,8 @@ export interface MedicalDriver {
   policeCheckDone: boolean;
   verificationStatus: string;
   /** @nullable */
+  rejectionReason?: string | null;
+  /** @nullable */
   notes?: string | null;
   createdAt: string;
 }

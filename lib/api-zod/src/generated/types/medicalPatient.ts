@@ -24,5 +24,7 @@ export interface MedicalPatient {
   /** @nullable */
   notes?: string | null;
   verificationStatus: string;
+  /** @nullable */
+  rejectionReason?: string | null;
   createdAt: string;
 }
