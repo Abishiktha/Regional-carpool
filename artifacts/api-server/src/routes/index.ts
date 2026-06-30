@@ -8,6 +8,7 @@ import medicalDriversRouter from "./medicalDrivers";
 import medicalAppointmentsRouter from "./medicalAppointments";
 import medicalTransportRouter from "./medicalTransport";
 import notificationsRouter from "./notifications";
+import verificationAuditLogRouter from "./verificationAuditLog";
 
 const router: IRouter = Router();
 
@@ -20,5 +21,6 @@ router.use("/medical/drivers", medicalDriversRouter);
 router.use("/medical/appointments", medicalAppointmentsRouter);
 router.use("/medical/transport-requests", medicalTransportRouter);
 router.use("/notifications", notificationsRouter);
+router.use("/medical/audit-log", verificationAuditLogRouter);
 
 export default router;

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db, medicalPatientsTable } from "@workspace/db";
+import { db, medicalPatientsTable, verificationAuditLogTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import {
   RegisterMedicalPatientBody,
@@ -47,6 +47,14 @@ router.post("/:id/verify", async (req, res) => {
     .returning();
   if (!patient) { res.status(404).json({ error: "Not found" }); return; }
 
+  await db.insert(verificationAuditLogTable).values({
+    entityType: "patient",
+    entityId: patient.id,
+    entityName: patient.fullName,
+    action: status,
+    reason: rejectionReason ?? null,
+  });
+
   if (status === "approved") {
     await notifyPatientApproved({ patientId: patient.id, fullName: patient.fullName, phone: patient.phone, suburb: patient.suburb });
   } else if (status === "rejected") {
@@ -74,6 +82,7 @@ function fmt(p: typeof medicalPatientsTable.$inferSelect) {
     mobilityNeeds: p.mobilityNeeds,
     notes: p.notes ?? null,
     verificationStatus: p.verificationStatus,
+    rejectionReason: p.rejectionReason ?? null,
     createdAt: p.createdAt.toISOString(),
   };
 }

@@ -21,14 +21,15 @@ import {
   useListMedicalTransportRequests,
   useAssignMedicalDriver,
   useListNotifications,
+  useListVerificationAuditLog,
   getListMedicalPatientsQueryKey,
   getListMedicalDriversQueryKey,
   getListMedicalTransportRequestsQueryKey,
 } from "@workspace/api-client-react";
-import type { MedicalPatient, MedicalDriver, MedicalTransportRequest, NotificationEntry } from "@workspace/api-client-react";
+import type { MedicalPatient, MedicalDriver, MedicalTransportRequest, NotificationEntry, VerificationAuditLogEntry } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { ShieldCheck, UserCheck, Car, ClipboardList, CheckCircle2, XCircle, MapPin, CalendarDays, Clock, AlertCircle, Bell, ChevronDown, ChevronRight } from "lucide-react";
+import { ShieldCheck, UserCheck, Car, ClipboardList, CheckCircle2, XCircle, MapPin, CalendarDays, Clock, AlertCircle, Bell, ChevronDown, ChevronRight, History } from "lucide-react";
 
 function verificationBadge(status: string) {
   if (status === "approved") return <Badge className="bg-green-100 text-green-800 border-green-200 border text-xs">Approved</Badge>;
@@ -436,10 +437,10 @@ export default function Admin() {
       </div>
 
       <Tabs defaultValue="patients" className="w-full">
-        <TabsList className="grid grid-cols-4 h-11 p-1 mb-6 w-full sm:w-auto">
+        <TabsList className="grid grid-cols-5 h-11 p-1 mb-6 w-full">
           <TabsTrigger value="patients" className="text-sm gap-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground" data-testid="admin-tab-patients">
             <UserCheck className="w-4 h-4" />
-            Patients
+            <span className="hidden sm:inline">Patients</span>
             {pendingPatients.length > 0 && (
               <span className="ml-1 bg-amber-500 text-white text-xs font-bold rounded-full w-4 h-4 flex items-center justify-center">
                 {pendingPatients.length}
@@ -448,7 +449,7 @@ export default function Admin() {
           </TabsTrigger>
           <TabsTrigger value="drivers" className="text-sm gap-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground" data-testid="admin-tab-drivers">
             <Car className="w-4 h-4" />
-            Drivers
+            <span className="hidden sm:inline">Drivers</span>
             {pendingDrivers.length > 0 && (
               <span className="ml-1 bg-amber-500 text-white text-xs font-bold rounded-full w-4 h-4 flex items-center justify-center">
                 {pendingDrivers.length}
@@ -457,7 +458,7 @@ export default function Admin() {
           </TabsTrigger>
           <TabsTrigger value="transport" className="text-sm gap-1.5 data-[state=active]:bg-teal-700 data-[state=active]:text-white" data-testid="admin-tab-transport">
             <ClipboardList className="w-4 h-4" />
-            Transport
+            <span className="hidden sm:inline">Transport</span>
             {pendingRequests.length > 0 && (
               <span className="ml-1 bg-teal-500 text-white text-xs font-bold rounded-full w-4 h-4 flex items-center justify-center">
                 {pendingRequests.length}
@@ -466,7 +467,11 @@ export default function Admin() {
           </TabsTrigger>
           <TabsTrigger value="messages" className="text-sm gap-1.5 data-[state=active]:bg-slate-700 data-[state=active]:text-white" data-testid="admin-tab-messages">
             <Bell className="w-4 h-4" />
-            Messages
+            <span className="hidden sm:inline">Messages</span>
+          </TabsTrigger>
+          <TabsTrigger value="audit" className="text-sm gap-1.5 data-[state=active]:bg-indigo-700 data-[state=active]:text-white" data-testid="admin-tab-audit">
+            <History className="w-4 h-4" />
+            <span className="hidden sm:inline">Audit Log</span>
           </TabsTrigger>
         </TabsList>
 
@@ -544,6 +549,10 @@ export default function Admin() {
         {/* Notifications log tab */}
         <TabsContent value="messages" className="mt-0 outline-none">
           <NotificationsPanel />
+        </TabsContent>
+        {/* Audit log tab */}
+        <TabsContent value="audit" className="mt-0 outline-none">
+          <AuditLogPanel />
         </TabsContent>
       </Tabs>
     </Layout>
@@ -627,6 +636,103 @@ function NotificationsPanel() {
     <div className="space-y-3">
       <p className="text-sm text-muted-foreground">{sorted.length} notification{sorted.length !== 1 ? "s" : ""} logged — newest first</p>
       {sorted.map(n => <NotificationCard key={n.id} n={n} />)}
+    </div>
+  );
+}
+
+// ── Audit log panel ────────────────────────────────────────────────────────
+
+function auditActionBadge(action: string) {
+  if (action === "approved") return <Badge className="bg-green-100 text-green-800 border-green-200 border text-xs">Approved</Badge>;
+  if (action === "rejected") return <Badge className="bg-red-100 text-red-800 border-red-200 border text-xs">Rejected</Badge>;
+  return <Badge className="bg-slate-100 text-slate-700 border-slate-200 border text-xs">{action}</Badge>;
+}
+
+function AuditLogRow({ entry }: { entry: VerificationAuditLogEntry }) {
+  const date = new Date(entry.decidedAt);
+  const dateStr = date.toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" });
+  const timeStr = date.toLocaleTimeString("en-AU", { hour: "2-digit", minute: "2-digit" });
+
+  return (
+    <div className="rounded-xl border bg-card p-4 flex flex-col sm:flex-row sm:items-start gap-3">
+      <div className="mt-0.5 rounded-full bg-indigo-50 p-2 shrink-0 self-start">
+        <History className="w-4 h-4 text-indigo-500" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex flex-wrap items-center gap-2 mb-1">
+          {auditActionBadge(entry.action)}
+          <span className="text-xs text-muted-foreground capitalize bg-muted rounded-full px-2 py-0.5">{entry.entityType}</span>
+          <span className="text-xs text-muted-foreground">·</span>
+          <span className="text-xs font-medium text-foreground">#{entry.entityId}</span>
+        </div>
+        <p className="font-semibold text-sm text-foreground">{entry.entityName}</p>
+        {entry.reason && (
+          <p className="text-xs text-muted-foreground mt-1 italic">"{entry.reason}"</p>
+        )}
+        <p className="text-xs text-muted-foreground mt-1">{dateStr} at {timeStr}</p>
+      </div>
+    </div>
+  );
+}
+
+function AuditLogPanel() {
+  const [filterType, setFilterType] = useState<"all" | "patient" | "driver">("all");
+  const [filterAction, setFilterAction] = useState<"all" | "approved" | "rejected">("all");
+  const { data: entries, isLoading } = useListVerificationAuditLog();
+
+  const filtered = (entries ?? []).filter(e => {
+    if (filterType !== "all" && e.entityType !== filterType) return false;
+    if (filterAction !== "all" && e.action !== filterAction) return false;
+    return true;
+  });
+
+  if (isLoading) {
+    return <div className="space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-20 w-full rounded-xl" />)}</div>;
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap gap-3 items-center">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-medium text-muted-foreground">Type</span>
+          <Select value={filterType} onValueChange={(v) => setFilterType(v as typeof filterType)}>
+            <SelectTrigger className="h-8 text-xs w-28">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="patient">Patients</SelectItem>
+              <SelectItem value="driver">Drivers</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-medium text-muted-foreground">Decision</span>
+          <Select value={filterAction} onValueChange={(v) => setFilterAction(v as typeof filterAction)}>
+            <SelectTrigger className="h-8 text-xs w-28">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="approved">Approved</SelectItem>
+              <SelectItem value="rejected">Rejected</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <span className="text-xs text-muted-foreground ml-auto">{filtered.length} entr{filtered.length !== 1 ? "ies" : "y"}</span>
+      </div>
+
+      {filtered.length === 0 ? (
+        <div className="rounded-xl border bg-card p-10 text-center text-muted-foreground">
+          <History className="w-8 h-8 mx-auto mb-3 opacity-30" />
+          <p className="font-medium">No decisions recorded yet</p>
+          <p className="text-sm mt-1">Every time you approve or reject a patient or driver, it will appear here with a timestamp.</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {filtered.map(e => <AuditLogRow key={e.id} entry={e} />)}
+        </div>
+      )}
     </div>
   );
 }

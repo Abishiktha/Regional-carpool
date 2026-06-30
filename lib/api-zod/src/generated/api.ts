@@ -636,6 +636,26 @@ export const ListNotificationsResponse = zod.array(ListNotificationsResponseItem
 
 
 /**
+ * @summary List verification audit log entries
+ */
+export const ListVerificationAuditLogQueryParams = zod.object({
+  "entityType": zod.coerce.string().optional(),
+  "entityId": zod.coerce.number().optional()
+})
+
+export const ListVerificationAuditLogResponseItem = zod.object({
+  "id": zod.number(),
+  "entityType": zod.string(),
+  "entityId": zod.number(),
+  "entityName": zod.string(),
+  "action": zod.string(),
+  "reason": zod.string().nullish(),
+  "decidedAt": zod.string()
+})
+export const ListVerificationAuditLogResponse = zod.array(ListVerificationAuditLogResponseItem)
+
+
+/**
  * @summary Get summary statistics
  */
 export const GetStatsResponse = zod.object({

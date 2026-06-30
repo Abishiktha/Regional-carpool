@@ -32,6 +32,7 @@ import type {
   ListNotificationsParams,
   ListRecurringAppointmentsParams,
   ListRideRequestsParams,
+  ListVerificationAuditLogParams,
   MedicalDriver,
   MedicalDriverInput,
   MedicalPatient,
@@ -46,6 +47,7 @@ import type {
   RideRequest,
   RideRequestInput,
   Stats,
+  VerificationAuditLogEntry,
   VerificationInput
 } from './api.schemas';
 
@@ -2223,6 +2225,90 @@ export function useListNotifications<TData = Awaited<ReturnType<typeof listNotif
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getListNotificationsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getListVerificationAuditLogUrl = (params?: ListVerificationAuditLogParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/medical/audit-log?${stringifiedParams}` : `/api/medical/audit-log`
+}
+
+/**
+ * @summary List verification audit log entries
+ */
+export const listVerificationAuditLog = async (params?: ListVerificationAuditLogParams, options?: RequestInit): Promise<VerificationAuditLogEntry[]> => {
+
+  return customFetch<VerificationAuditLogEntry[]>(getListVerificationAuditLogUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListVerificationAuditLogQueryKey = (params?: ListVerificationAuditLogParams,) => {
+    return [
+    `/api/medical/audit-log`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListVerificationAuditLogQueryOptions = <TData = Awaited<ReturnType<typeof listVerificationAuditLog>>, TError = ErrorType<unknown>>(params?: ListVerificationAuditLogParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listVerificationAuditLog>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListVerificationAuditLogQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listVerificationAuditLog>>> = ({ signal }) => listVerificationAuditLog(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listVerificationAuditLog>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListVerificationAuditLogQueryResult = NonNullable<Awaited<ReturnType<typeof listVerificationAuditLog>>>
+export type ListVerificationAuditLogQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List verification audit log entries
+ */
+
+export function useListVerificationAuditLog<TData = Awaited<ReturnType<typeof listVerificationAuditLog>>, TError = ErrorType<unknown>>(
+ params?: ListVerificationAuditLogParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listVerificationAuditLog>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListVerificationAuditLogQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

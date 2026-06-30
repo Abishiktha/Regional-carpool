@@ -7,3 +7,4 @@ export * from "./medicalDrivers";
 export * from "./recurringAppointments";
 export * from "./medicalTransportRequests";
 export * from "./notifications";
+export * from "./verificationAuditLog";

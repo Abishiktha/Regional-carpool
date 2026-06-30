@@ -257,6 +257,17 @@ export interface AssignDriverInput {
   driverId: number;
 }
 
+export interface VerificationAuditLogEntry {
+  id: number;
+  entityType: string;
+  entityId: number;
+  entityName: string;
+  action: string;
+  /** @nullable */
+  reason?: string | null;
+  decidedAt: string;
+}
+
 export interface VerificationInput {
   status: string;
   rejectionReason?: string;
@@ -300,5 +311,10 @@ status?: string;
 export type ListNotificationsParams = {
 recipientType?: string;
 recipientId?: number;
+};
+
+export type ListVerificationAuditLogParams = {
+entityType?: string;
+entityId?: number;
 };
 
