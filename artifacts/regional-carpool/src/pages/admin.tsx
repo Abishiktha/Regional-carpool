@@ -30,7 +30,7 @@ import {
 import type { MedicalPatient, MedicalDriver, MedicalTransportRequest, NotificationEntry, VerificationAuditLogEntry } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { ShieldCheck, UserCheck, Car, ClipboardList, CheckCircle2, XCircle, MapPin, CalendarDays, Clock, AlertCircle, Bell, ChevronDown, ChevronRight, History, Search, Download, X, NotebookPen, Save, Printer } from "lucide-react";
+import { ShieldCheck, UserCheck, Car, ClipboardList, CheckCircle2, XCircle, MapPin, CalendarDays, Clock, AlertCircle, Bell, ChevronDown, ChevronRight, ChevronLeft, History, Search, Download, X, NotebookPen, Save, Printer } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 function verificationBadge(status: string) {
@@ -276,6 +276,240 @@ function DriverRow({ driver, onAction }: { driver: MedicalDriver; onAction: () =
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+// ── Weekly summary ────────────────────────────────────────────────────────────
+
+function getWeekBounds(anchor: Date): { start: Date; end: Date } {
+  const start = new Date(anchor);
+  const day = start.getDay(); // 0=Sun
+  start.setDate(start.getDate() - ((day + 6) % 7)); // Monday
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(start);
+  end.setDate(end.getDate() + 6); // Sunday
+  end.setHours(23, 59, 59, 999);
+  return { start, end };
+}
+
+function toISO(d: Date) { return d.toISOString().slice(0, 10); }
+
+function fmtWeekLabel(start: Date, end: Date) {
+  const opts: Intl.DateTimeFormatOptions = { day: "numeric", month: "short" };
+  return `${start.toLocaleDateString("en-AU", opts)} – ${end.toLocaleDateString("en-AU", { ...opts, year: "numeric" })}`;
+}
+
+function exportWeeklyCSV(rows: MedicalTransportRequest[], weekLabel: string) {
+  const esc = (s: string | null | undefined) => `"${(s ?? "").replace(/"/g, '""')}"`;
+  const header = ["Date", "Patient", "Pickup Address", "Pickup Suburb", "Destination", "Dest. Address", "Pickup Time", "Return", "Return Time", "Driver", "Status", "Coordinator Notes"];
+  const lines = rows.map(r => [
+    esc(r.tripDate), esc(r.patientName), esc(r.pickupAddress), esc(r.pickupSuburb),
+    esc(r.destinationName), esc(r.destinationAddress), esc(r.tripTime),
+    r.returnTrip ? "Yes" : "No", esc(r.returnTime),
+    esc(r.assignedDriverName), esc(r.status), esc(r.coordinatorNotes),
+  ].join(","));
+  const csv = [header.join(","), ...lines].join("\n");
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const slug = weekLabel.replace(/[^a-z0-9]/gi, "-").toLowerCase();
+  a.href = url; a.download = `transport-week-${slug}.csv`; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function printWeeklySummary(rows: MedicalTransportRequest[], weekLabel: string) {
+  const printedAt = new Date().toLocaleString("en-AU", { dateStyle: "full", timeStyle: "short" });
+  const byDate: Record<string, MedicalTransportRequest[]> = {};
+  for (const r of rows) {
+    if (!byDate[r.tripDate]) byDate[r.tripDate] = [];
+    byDate[r.tripDate].push(r);
+  }
+  const sortedDates = Object.keys(byDate).sort();
+
+  const statusBadge = (s: string) => {
+    const map: Record<string, string> = { pending: "#fef3c7;color:#92400e", assigned: "#dbeafe;color:#1e40af", completed: "#dcfce7;color:#166534", cancelled: "#fee2e2;color:#991b1b" };
+    const style = map[s] ?? "#f3f4f6;color:#374151";
+    return `<span style="background:${style};padding:1px 7px;border-radius:10px;font-size:10px;font-weight:700;text-transform:uppercase">${s}</span>`;
+  };
+
+  const dateSection = sortedDates.map(date => {
+    const trips = byDate[date];
+    const rows = trips.map(r => `
+      <tr>
+        <td>${r.tripTime}</td>
+        <td><strong>${r.patientName}</strong></td>
+        <td>${r.pickupSuburb} → ${r.destinationName}</td>
+        <td>${r.assignedDriverName ?? "<em style='color:#999'>Unassigned</em>"}</td>
+        <td>${statusBadge(r.status)}</td>
+        <td style="font-size:10px;color:#555">${r.coordinatorNotes ?? ""}</td>
+      </tr>`).join("");
+    const d = new Date(date + "T00:00:00");
+    const label = d.toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "long" });
+    return `
+      <div style="margin-bottom:24px">
+        <div style="font-size:14px;font-weight:700;padding:6px 0;border-bottom:2px solid #1a1a1a;margin-bottom:8px">${label}</div>
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead><tr style="background:#f3f4f6;font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:#555">
+            <th style="padding:4px 6px;text-align:left;width:60px">Time</th>
+            <th style="padding:4px 6px;text-align:left">Patient</th>
+            <th style="padding:4px 6px;text-align:left">Route</th>
+            <th style="padding:4px 6px;text-align:left">Driver</th>
+            <th style="padding:4px 6px;text-align:left">Status</th>
+            <th style="padding:4px 6px;text-align:left">Notes</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+  }).join("");
+
+  const html = `<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/>
+<title>Weekly Transport Summary — ${weekLabel}</title>
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:Georgia,serif; font-size:13px; color:#1a1a1a; padding:32px 40px; max-width:860px; margin:0 auto; }
+  header { display:flex; align-items:flex-start; justify-content:space-between; padding-bottom:14px; border-bottom:3px solid #1a1a1a; margin-bottom:24px; }
+  .brand { font-size:20px; font-weight:700; } .brand span { color:#c2410c; }
+  .meta { text-align:right; font-size:11px; color:#555; line-height:1.6; }
+  tbody tr:nth-child(even) { background:#fafafa; }
+  tbody td { padding:5px 6px; border-bottom:1px solid #eee; vertical-align:top; }
+  footer { margin-top:32px; padding-top:10px; border-top:1px solid #ddd; font-size:10px; color:#888; display:flex; justify-content:space-between; }
+  @media print { body { padding:16px 24px; } }
+</style>
+</head><body>
+<header>
+  <div class="brand"><span>Regional</span> Carpool</div>
+  <div class="meta"><strong>WEEKLY TRANSPORT SUMMARY</strong><br/>${weekLabel}<br/>Printed: ${printedAt}</div>
+</header>
+<p style="margin-bottom:20px;font-size:12px;color:#555">${rows.length} trip${rows.length !== 1 ? "s" : ""} scheduled this week</p>
+${rows.length === 0 ? `<p style="color:#888;font-style:italic">No trips scheduled for this week.</p>` : dateSection}
+<footer><span>Regional Carpool — Medical Transport Program</span><span>Generated ${printedAt}</span></footer>
+<script>window.onload=function(){window.print();};<\/script>
+</body></html>`;
+
+  const win = window.open("", "_blank", "width=900,height=900");
+  if (!win) return;
+  win.document.write(html);
+  win.document.close();
+}
+
+function WeeklySummaryPanel({ requests }: { requests: MedicalTransportRequest[] }) {
+  const [anchor, setAnchor] = useState(() => new Date());
+  const [open, setOpen] = useState(false);
+  const { start, end } = getWeekBounds(anchor);
+  const weekLabel = fmtWeekLabel(start, end);
+
+  const weekRows = requests
+    .filter(r => r.tripDate >= toISO(start) && r.tripDate <= toISO(end))
+    .sort((a, b) => a.tripDate.localeCompare(b.tripDate) || a.tripTime.localeCompare(b.tripTime));
+
+  const byDate: Record<string, MedicalTransportRequest[]> = {};
+  for (const r of weekRows) {
+    if (!byDate[r.tripDate]) byDate[r.tripDate] = [];
+    byDate[r.tripDate].push(r);
+  }
+  const sortedDates = Object.keys(byDate).sort();
+
+  function prevWeek() { const d = new Date(anchor); d.setDate(d.getDate() - 7); setAnchor(d); }
+  function nextWeek() { const d = new Date(anchor); d.setDate(d.getDate() + 7); setAnchor(d); }
+  function thisWeek() { setAnchor(new Date()); }
+
+  const isCurrentWeek = toISO(start) === toISO(getWeekBounds(new Date()).start);
+
+  return (
+    <div className="rounded-xl border bg-card overflow-hidden">
+      {/* Header row */}
+      <div
+        className="flex items-center gap-3 px-4 py-3 cursor-pointer select-none hover:bg-muted/30 transition-colors"
+        onClick={() => setOpen(v => !v)}
+      >
+        <CalendarDays className="w-4 h-4 text-teal-700 flex-shrink-0" />
+        <span className="font-semibold text-sm text-foreground flex-1">Weekly Summary</span>
+        <span className="text-xs text-muted-foreground">{weekLabel}</span>
+        <span className="text-xs font-medium text-teal-700 bg-teal-50 border border-teal-200 rounded-full px-2 py-0.5">
+          {weekRows.length} trip{weekRows.length !== 1 ? "s" : ""}
+        </span>
+        {open ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+      </div>
+
+      {open && (
+        <div className="border-t px-4 py-3 space-y-4">
+          {/* Week navigation */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-1 rounded-lg border overflow-hidden">
+              <button onClick={prevWeek} className="px-2 py-1.5 hover:bg-muted transition-colors" aria-label="Previous week">
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <span className="px-3 py-1.5 text-xs font-medium text-foreground border-x min-w-[180px] text-center">{weekLabel}</span>
+              <button onClick={nextWeek} className="px-2 py-1.5 hover:bg-muted transition-colors" aria-label="Next week">
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+            {!isCurrentWeek && (
+              <button onClick={thisWeek} className="text-xs text-teal-700 hover:underline">Today's week</button>
+            )}
+            <div className="ml-auto flex gap-2">
+              {weekRows.length > 0 && (
+                <>
+                  <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5" onClick={() => exportWeeklyCSV(weekRows, weekLabel)}>
+                    <Download className="w-3.5 h-3.5" /> Export CSV
+                  </Button>
+                  <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5" onClick={() => printWeeklySummary(weekRows, weekLabel)}>
+                    <Printer className="w-3.5 h-3.5" /> Print summary
+                  </Button>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Grouped trips */}
+          {weekRows.length === 0 ? (
+            <div className="py-6 text-center text-sm text-muted-foreground">
+              No trips scheduled for {weekLabel}.
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {sortedDates.map(date => {
+                const d = new Date(date + "T00:00:00");
+                const dayLabel = d.toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "long" });
+                return (
+                  <div key={date}>
+                    <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2 flex items-center gap-2">
+                      <span>{dayLabel}</span>
+                      <span className="flex-1 border-t border-dashed border-border" />
+                      <span className="text-teal-700">{byDate[date].length} trip{byDate[date].length !== 1 ? "s" : ""}</span>
+                    </div>
+                    <div className="space-y-1.5">
+                      {byDate[date].map(r => (
+                        <div key={r.id} className="flex items-start gap-3 rounded-lg bg-muted/40 px-3 py-2 text-xs">
+                          <span className="font-mono text-muted-foreground w-12 flex-shrink-0 pt-0.5">{r.tripTime}</span>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-foreground">{r.patientName}</div>
+                            <div className="text-muted-foreground">{r.pickupSuburb} → {r.destinationName}</div>
+                            {r.assignedDriverName && (
+                              <div className="text-teal-700 flex items-center gap-1 mt-0.5">
+                                <Car className="w-3 h-3" /> {r.assignedDriverName}
+                              </div>
+                            )}
+                            {r.coordinatorNotes && (
+                              <div className="text-indigo-700 flex items-start gap-1 mt-0.5">
+                                <NotebookPen className="w-3 h-3 flex-shrink-0 mt-0.5" />
+                                <span className="line-clamp-1">{r.coordinatorNotes}</span>
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex-shrink-0">{transportStatusBadge(r.status)}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -760,22 +994,27 @@ export default function Admin() {
         <TabsContent value="transport" className="mt-0 outline-none space-y-3">
           {requestsLoading ? (
             [1, 2, 3].map((i) => <Skeleton key={i} className="h-28 w-full rounded-xl" />)
-          ) : allRequests.length === 0 ? (
-            <div className="rounded-xl border bg-card p-10 text-center text-muted-foreground">
-              <ClipboardList className="w-8 h-8 mx-auto mb-3 opacity-30" />
-              <p className="font-medium">No transport requests yet</p>
-            </div>
           ) : (
             <>
-              {pendingRequests.length > 0 && (
-                <p className="text-sm font-medium text-amber-700 mb-1">{pendingRequests.length} awaiting driver assignment</p>
+              <WeeklySummaryPanel requests={allRequests} />
+              {allRequests.length === 0 ? (
+                <div className="rounded-xl border bg-card p-10 text-center text-muted-foreground">
+                  <ClipboardList className="w-8 h-8 mx-auto mb-3 opacity-30" />
+                  <p className="font-medium">No transport requests yet</p>
+                </div>
+              ) : (
+                <>
+                  {pendingRequests.length > 0 && (
+                    <p className="text-sm font-medium text-amber-700 mb-1">{pendingRequests.length} awaiting driver assignment</p>
+                  )}
+                  {allRequests
+                    .slice()
+                    .sort((a, b) => (a.status === "pending" ? -1 : 1) - (b.status === "pending" ? -1 : 1))
+                    .map((r) => (
+                      <TransportRow key={r.id} request={r} approvedDrivers={approvedDrivers} />
+                    ))}
+                </>
               )}
-              {allRequests
-                .slice()
-                .sort((a, b) => (a.status === "pending" ? -1 : 1) - (b.status === "pending" ? -1 : 1))
-                .map((r) => (
-                  <TransportRow key={r.id} request={r} approvedDrivers={approvedDrivers} />
-                ))}
             </>
           )}
         </TabsContent>
