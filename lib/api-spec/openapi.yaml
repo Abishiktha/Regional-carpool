@@ -579,6 +579,51 @@ paths:
         "400":
           description: Driver not verified or request already assigned
 
+  /medical/driver-availability:
+    get:
+      operationId: getDriverAvailability
+      tags: [medical-transport]
+      summary: Get a driver's availability for a week
+      parameters:
+        - name: driverId
+          in: query
+          required: true
+          schema: { type: integer }
+        - name: weekStart
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Availability entries for the week
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DriverAvailabilityEntry"
+        "400":
+          description: Invalid input
+    post:
+      operationId: setDriverAvailability
+      tags: [medical-transport]
+      summary: Set a driver's availability for a specific date
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DriverAvailabilityInput"
+      responses:
+        "200":
+          description: Availability upserted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DriverAvailabilityEntry"
+        "400":
+          description: Invalid input
+
   /medical/transport-requests/{id}/coordinator-notes:
     patch:
       operationId: updateCoordinatorNotes
@@ -1132,6 +1177,30 @@ components:
       properties:
         coordinatorNotes:
           type: ["string", "null"]
+
+    DriverAvailabilityEntry:
+      type: object
+      required: [id, driverId, date, available]
+      properties:
+        id:
+          type: integer
+        driverId:
+          type: integer
+        date:
+          type: string
+        available:
+          type: boolean
+
+    DriverAvailabilityInput:
+      type: object
+      required: [driverId, date, available]
+      properties:
+        driverId:
+          type: integer
+        date:
+          type: string
+        available:
+          type: boolean
 
     VerificationAuditLogEntry:
       type: object

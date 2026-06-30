@@ -27,6 +27,9 @@ import type {
   CarpoolPost,
   CarpoolPostInput,
   CoordinatorNotesInput,
+  DriverAvailabilityEntry,
+  DriverAvailabilityInput,
+  GetDriverAvailabilityParams,
   HealthStatus,
   ListCarpoolPostsParams,
   ListMedicalTransportRequestsParams,
@@ -2152,6 +2155,161 @@ export const useAssignMedicalDriver = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getAssignMedicalDriverMutationOptions(options));
+    }
+
+export const getGetDriverAvailabilityUrl = (params: GetDriverAvailabilityParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/medical/driver-availability?${stringifiedParams}` : `/api/medical/driver-availability`
+}
+
+/**
+ * @summary Get a driver's availability for a week
+ */
+export const getDriverAvailability = async (params: GetDriverAvailabilityParams, options?: RequestInit): Promise<DriverAvailabilityEntry[]> => {
+
+  return customFetch<DriverAvailabilityEntry[]>(getGetDriverAvailabilityUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetDriverAvailabilityQueryKey = (params?: GetDriverAvailabilityParams,) => {
+    return [
+    `/api/medical/driver-availability`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetDriverAvailabilityQueryOptions = <TData = Awaited<ReturnType<typeof getDriverAvailability>>, TError = ErrorType<void>>(params: GetDriverAvailabilityParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getDriverAvailability>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetDriverAvailabilityQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getDriverAvailability>>> = ({ signal }) => getDriverAvailability(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getDriverAvailability>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetDriverAvailabilityQueryResult = NonNullable<Awaited<ReturnType<typeof getDriverAvailability>>>
+export type GetDriverAvailabilityQueryError = ErrorType<void>
+
+
+/**
+ * @summary Get a driver's availability for a week
+ */
+
+export function useGetDriverAvailability<TData = Awaited<ReturnType<typeof getDriverAvailability>>, TError = ErrorType<void>>(
+ params: GetDriverAvailabilityParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getDriverAvailability>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetDriverAvailabilityQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getSetDriverAvailabilityUrl = () => {
+
+
+
+
+  return `/api/medical/driver-availability`
+}
+
+/**
+ * @summary Set a driver's availability for a specific date
+ */
+export const setDriverAvailability = async (driverAvailabilityInput: DriverAvailabilityInput, options?: RequestInit): Promise<DriverAvailabilityEntry> => {
+
+  return customFetch<DriverAvailabilityEntry>(getSetDriverAvailabilityUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      driverAvailabilityInput,)
+  }
+);}
+
+
+
+
+export const getSetDriverAvailabilityMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setDriverAvailability>>, TError,{data: BodyType<DriverAvailabilityInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof setDriverAvailability>>, TError,{data: BodyType<DriverAvailabilityInput>}, TContext> => {
+
+const mutationKey = ['setDriverAvailability'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof setDriverAvailability>>, {data: BodyType<DriverAvailabilityInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  setDriverAvailability(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SetDriverAvailabilityMutationResult = NonNullable<Awaited<ReturnType<typeof setDriverAvailability>>>
+    export type SetDriverAvailabilityMutationBody = BodyType<DriverAvailabilityInput>
+    export type SetDriverAvailabilityMutationError = ErrorType<void>
+
+    /**
+ * @summary Set a driver's availability for a specific date
+ */
+export const useSetDriverAvailability = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setDriverAvailability>>, TError,{data: BodyType<DriverAvailabilityInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof setDriverAvailability>>,
+        TError,
+        {data: BodyType<DriverAvailabilityInput>},
+        TContext
+      > => {
+      return useMutation(getSetDriverAvailabilityMutationOptions(options));
     }
 
 export const getUpdateCoordinatorNotesUrl = (id: number,) => {

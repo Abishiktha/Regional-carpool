@@ -21,6 +21,7 @@ import {
   useListMedicalTransportRequests,
   useAssignMedicalDriver,
   useUpdateCoordinatorNotes,
+  useGetDriverAvailability,
   useListNotifications,
   useListVerificationAuditLog,
   getListMedicalPatientsQueryKey,
@@ -513,6 +514,43 @@ function WeeklySummaryPanel({ requests }: { requests: MedicalTransportRequest[] 
   );
 }
 
+// ── Driver availability hint (used in assign dialog) ─────────────────────────
+
+function DriverAvailabilityHint({ driverId, tripDate }: { driverId: number; tripDate: string }) {
+  const weekStart = (() => {
+    const d = new Date(tripDate + "T00:00:00");
+    const day = d.getDay();
+    d.setDate(d.getDate() - ((day + 6) % 7));
+    return d.toISOString().slice(0, 10);
+  })();
+
+  const { data: entries, isLoading } = useGetDriverAvailability(
+    { driverId, weekStart },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    { query: {} as any }
+  );
+
+  if (isLoading) return <span className="text-xs text-muted-foreground">Checking availability…</span>;
+
+  const entry = (entries ?? []).find(e => e.date === tripDate);
+  if (!entry) return (
+    <span className="text-xs text-muted-foreground flex items-center gap-1">
+      <span className="w-2 h-2 rounded-full bg-muted-foreground/40 inline-block" />
+      No availability marked for this date
+    </span>
+  );
+  if (entry.available) return (
+    <span className="text-xs text-green-700 flex items-center gap-1 font-medium">
+      <CheckCircle2 className="w-3.5 h-3.5" /> Marked available on {tripDate}
+    </span>
+  );
+  return (
+    <span className="text-xs text-red-600 flex items-center gap-1 font-medium">
+      <XCircle className="w-3.5 h-3.5" /> Marked unavailable on {tripDate}
+    </span>
+  );
+}
+
 // ── Print trip sheet ─────────────────────────────────────────────────────────
 
 function printTripSheet(r: MedicalTransportRequest) {
@@ -781,18 +819,28 @@ function TransportRow({ request, approvedDrivers }: { request: MedicalTransportR
                 No approved drivers available. Approve a driver registration first.
               </div>
             ) : (
-              <Select value={selectedDriverId} onValueChange={setSelectedDriverId}>
-                <SelectTrigger data-testid="select-driver">
-                  <SelectValue placeholder="Select a verified driver" />
-                </SelectTrigger>
-                <SelectContent>
-                  {approvedDrivers.map((d) => (
-                    <SelectItem key={d.id} value={String(d.id)}>
-                      {d.fullName} — {d.vehicleType} {d.hasWheelchairAccess ? "(wheelchair)" : ""}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <>
+                <Select value={selectedDriverId} onValueChange={setSelectedDriverId}>
+                  <SelectTrigger data-testid="select-driver">
+                    <SelectValue placeholder="Select a verified driver" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {approvedDrivers.map((d) => (
+                      <SelectItem key={d.id} value={String(d.id)}>
+                        {d.fullName} — {d.vehicleType} {d.hasWheelchairAccess ? "(wheelchair)" : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {selectedDriverId && (
+                  <div className="px-1">
+                    <DriverAvailabilityHint
+                      driverId={Number(selectedDriverId)}
+                      tripDate={request.tripDate}
+                    />
+                  </div>
+                )}
+              </>
             )}
           </div>
           <DialogFooter>

@@ -264,6 +264,19 @@ export interface CoordinatorNotesInput {
   coordinatorNotes?: string | null;
 }
 
+export interface DriverAvailabilityEntry {
+  id: number;
+  driverId: number;
+  date: string;
+  available: boolean;
+}
+
+export interface DriverAvailabilityInput {
+  driverId: number;
+  date: string;
+  available: boolean;
+}
+
 export interface VerificationAuditLogEntry {
   id: number;
   entityType: string;
@@ -313,6 +326,11 @@ export type ListMedicalTransportRequestsParams = {
 patientId?: number;
 assignedDriverId?: number;
 status?: string;
+};
+
+export type GetDriverAvailabilityParams = {
+driverId: number;
+weekStart: string;
 };
 
 export type ListNotificationsParams = {

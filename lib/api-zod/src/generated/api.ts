@@ -618,6 +618,40 @@ export const AssignMedicalDriverResponse = zod.object({
 
 
 /**
+ * @summary Get a driver's availability for a week
+ */
+export const GetDriverAvailabilityQueryParams = zod.object({
+  "driverId": zod.coerce.number(),
+  "weekStart": zod.coerce.string()
+})
+
+export const GetDriverAvailabilityResponseItem = zod.object({
+  "id": zod.number(),
+  "driverId": zod.number(),
+  "date": zod.string(),
+  "available": zod.boolean()
+})
+export const GetDriverAvailabilityResponse = zod.array(GetDriverAvailabilityResponseItem)
+
+
+/**
+ * @summary Set a driver's availability for a specific date
+ */
+export const SetDriverAvailabilityBody = zod.object({
+  "driverId": zod.number(),
+  "date": zod.string(),
+  "available": zod.boolean()
+})
+
+export const SetDriverAvailabilityResponse = zod.object({
+  "id": zod.number(),
+  "driverId": zod.number(),
+  "date": zod.string(),
+  "available": zod.boolean()
+})
+
+
+/**
  * @summary Update coordinator notes on a transport request
  */
 export const UpdateCoordinatorNotesParams = zod.object({

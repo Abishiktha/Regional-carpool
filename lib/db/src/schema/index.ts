@@ -8,3 +8,4 @@ export * from "./recurringAppointments";
 export * from "./medicalTransportRequests";
 export * from "./notifications";
 export * from "./verificationAuditLog";
+export * from "./driverAvailability";

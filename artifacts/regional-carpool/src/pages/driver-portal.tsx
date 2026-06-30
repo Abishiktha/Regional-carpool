@@ -7,6 +7,9 @@ import {
   useListMedicalTransportRequests,
   useListNotifications,
   useCompleteMedicalTransportRequest,
+  useGetDriverAvailability,
+  useSetDriverAvailability,
+  getGetDriverAvailabilityQueryKey,
   getListMedicalTransportRequestsQueryKey,
 } from "@workspace/api-client-react";
 import type { MedicalDriver, MedicalTransportRequest, NotificationEntry } from "@workspace/api-client-react";
@@ -28,6 +31,7 @@ import {
   Bell,
   ChevronDown,
   ChevronRight,
+  ChevronLeft,
   Accessibility,
   ArrowRight,
   ClipboardList,
@@ -39,6 +43,150 @@ import {
   Info,
   RotateCcw,
 } from "lucide-react";
+
+// ── Calendar helpers ─────────────────────────────────────────────────────────
+
+function calWeekStart(anchor: Date): string {
+  const d = new Date(anchor);
+  const day = d.getDay();
+  d.setDate(d.getDate() - ((day + 6) % 7)); // Monday
+  d.setHours(0, 0, 0, 0);
+  return d.toISOString().slice(0, 10);
+}
+
+function calAddDays(dateStr: string, n: number): string {
+  const d = new Date(dateStr + "T00:00:00");
+  d.setDate(d.getDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+
+function calFmtWeek(ws: string) {
+  const start = new Date(ws + "T00:00:00");
+  const end = new Date(ws + "T00:00:00");
+  end.setDate(end.getDate() + 6);
+  const opts: Intl.DateTimeFormatOptions = { day: "numeric", month: "short" };
+  return `${start.toLocaleDateString("en-AU", opts)} – ${end.toLocaleDateString("en-AU", { ...opts, year: "numeric" })}`;
+}
+
+// ── Availability calendar ─────────────────────────────────────────────────────
+
+function AvailabilityCalendar({ driverId }: { driverId: number }) {
+  const [anchor, setAnchor] = useState(() => new Date());
+  const weekStart = calWeekStart(anchor);
+  const queryClient = useQueryClient();
+
+  const { data: entries, isLoading } = useGetDriverAvailability(
+    { driverId, weekStart },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    { query: {} as any }
+  );
+
+  const setAvail = useSetDriverAvailability();
+
+  const availMap: Record<string, boolean> = {};
+  for (const e of entries ?? []) availMap[e.date] = e.available;
+
+  const days = Array.from({ length: 7 }, (_, i) => calAddDays(weekStart, i));
+  const dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const today = new Date().toISOString().slice(0, 10);
+  const isCurrentWeek = weekStart === calWeekStart(new Date());
+
+  function toggle(date: string) {
+    const current = availMap[date];
+    const next = current === true ? false : true;
+    setAvail.mutate({ data: { driverId, date, available: next } }, {
+      onSuccess: () => queryClient.invalidateQueries({
+        queryKey: getGetDriverAvailabilityQueryKey({ driverId, weekStart }),
+      }),
+    });
+  }
+
+  function prevWeek() {
+    const d = new Date(anchor); d.setDate(d.getDate() - 7); setAnchor(d);
+  }
+  function nextWeek() {
+    const d = new Date(anchor); d.setDate(d.getDate() + 7); setAnchor(d);
+  }
+
+  return (
+    <section className="mb-8">
+      <h3 className="text-base font-bold text-foreground mb-3 flex items-center gap-2">
+        <CalendarDays className="w-4 h-4 text-indigo-600" />
+        My Availability
+      </h3>
+      <div className="rounded-2xl border bg-card p-5">
+        <p className="text-xs text-muted-foreground mb-4">
+          Mark which days you're available to drive. Coordinators can see this when assigning trips.
+        </p>
+
+        {/* Week navigation */}
+        <div className="flex items-center gap-2 mb-4">
+          <div className="flex items-center gap-1 rounded-lg border overflow-hidden">
+            <button onClick={prevWeek} className="px-2 py-1.5 hover:bg-muted transition-colors" aria-label="Previous week">
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <span className="px-3 py-1.5 text-xs font-medium border-x min-w-[180px] text-center">{calFmtWeek(weekStart)}</span>
+            <button onClick={nextWeek} className="px-2 py-1.5 hover:bg-muted transition-colors" aria-label="Next week">
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+          {!isCurrentWeek && (
+            <button onClick={() => setAnchor(new Date())} className="text-xs text-indigo-600 hover:underline">
+              This week
+            </button>
+          )}
+        </div>
+
+        {/* 7-day grid */}
+        {isLoading ? (
+          <div className="grid grid-cols-7 gap-2">
+            {[...Array(7)].map((_, i) => <Skeleton key={i} className="h-16 rounded-xl" />)}
+          </div>
+        ) : (
+          <div className="grid grid-cols-7 gap-1.5">
+            {days.map((date, i) => {
+              const avail = availMap[date];
+              const isToday = date === today;
+              const isPast = date < today;
+              const isAvailable = avail === true;
+              const isUnavailable = avail === false;
+
+              return (
+                <button
+                  key={date}
+                  onClick={() => !isPast && toggle(date)}
+                  disabled={isPast || setAvail.isPending}
+                  className={`
+                    flex flex-col items-center gap-1 rounded-xl p-2 text-center transition-all border
+                    ${isPast ? "opacity-40 cursor-not-allowed" : "cursor-pointer hover:scale-105 active:scale-95"}
+                    ${isAvailable ? "bg-green-50 border-green-300 text-green-800" : ""}
+                    ${isUnavailable ? "bg-red-50 border-red-300 text-red-800" : ""}
+                    ${!isAvailable && !isUnavailable ? "bg-muted/50 border-border text-muted-foreground" : ""}
+                    ${isToday ? "ring-2 ring-indigo-400 ring-offset-1" : ""}
+                  `}
+                >
+                  <span className="text-[10px] font-semibold uppercase tracking-wide">{dayNames[i]}</span>
+                  <span className="text-sm font-bold leading-none">{new Date(date + "T00:00:00").getDate()}</span>
+                  <span className="text-[9px] leading-none mt-0.5">
+                    {isAvailable ? "✓ Free" : isUnavailable ? "✗ Busy" : "—"}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Legend */}
+        <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-green-100 border border-green-300 inline-block" /> Available</span>
+          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-red-100 border border-red-300 inline-block" /> Unavailable</span>
+          <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-muted border inline-block" /> Not set</span>
+          <span className="ml-auto italic">Tap a day to toggle</span>
+        </div>
+      </div>
+    </section>
+  );
+}
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -650,6 +798,8 @@ export default function DriverPortal() {
                   <StatsBar trips={trips ?? []} />
 
                   <EarningsSummary trips={trips ?? []} />
+
+                  <AvailabilityCalendar driverId={driver.id} />
 
                   {/* Upcoming trips */}
                   <section className="mb-8">
