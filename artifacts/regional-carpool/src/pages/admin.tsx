@@ -29,7 +29,8 @@ import {
 import type { MedicalPatient, MedicalDriver, MedicalTransportRequest, NotificationEntry, VerificationAuditLogEntry } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { ShieldCheck, UserCheck, Car, ClipboardList, CheckCircle2, XCircle, MapPin, CalendarDays, Clock, AlertCircle, Bell, ChevronDown, ChevronRight, History } from "lucide-react";
+import { ShieldCheck, UserCheck, Car, ClipboardList, CheckCircle2, XCircle, MapPin, CalendarDays, Clock, AlertCircle, Bell, ChevronDown, ChevronRight, History, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 function verificationBadge(status: string) {
   if (status === "approved") return <Badge className="bg-green-100 text-green-800 border-green-200 border text-xs">Approved</Badge>;
@@ -400,6 +401,9 @@ function TransportRow({ request, approvedDrivers }: { request: MedicalTransportR
 // ── Main admin page ───────────────────────────────────────────────────────────
 
 export default function Admin() {
+  const [patientSearch, setPatientSearch] = useState("");
+  const [driverSearch, setDriverSearch] = useState("");
+
   const { data: patients, isLoading: patientsLoading } = useListMedicalPatients();
   const { data: drivers, isLoading: driversLoading } = useListMedicalDrivers();
   const { data: requests, isLoading: requestsLoading } = useListMedicalTransportRequests();
@@ -409,6 +413,15 @@ export default function Admin() {
   const approvedDrivers = drivers?.filter((d) => d.verificationStatus === "approved") ?? [];
   const pendingRequests = requests?.filter((r) => r.status === "pending") ?? [];
   const allRequests = requests ?? [];
+
+  const patientQ = patientSearch.trim().toLowerCase();
+  const driverQ = driverSearch.trim().toLowerCase();
+  const filteredPatients = patientQ
+    ? (patients ?? []).filter((p) => p.fullName.toLowerCase().includes(patientQ) || p.suburb.toLowerCase().includes(patientQ))
+    : (patients ?? []);
+  const filteredDrivers = driverQ
+    ? (drivers ?? []).filter((d) => d.fullName.toLowerCase().includes(driverQ) || d.vehicleRego.toLowerCase().includes(driverQ))
+    : (drivers ?? []);
 
   return (
     <Layout>
@@ -486,15 +499,35 @@ export default function Admin() {
             </div>
           ) : (
             <>
-              {pendingPatients.length > 0 && (
-                <p className="text-sm font-medium text-amber-700 mb-1">{pendingPatients.length} pending review</p>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                <Input
+                  placeholder="Search by name or suburb…"
+                  value={patientSearch}
+                  onChange={(e) => setPatientSearch(e.target.value)}
+                  className="pl-9 h-9"
+                />
+              </div>
+              {filteredPatients.length === 0 ? (
+                <div className="rounded-xl border bg-card p-8 text-center text-muted-foreground">
+                  <p className="font-medium">No patients match "{patientSearch}"</p>
+                </div>
+              ) : (
+                <>
+                  {!patientQ && pendingPatients.length > 0 && (
+                    <p className="text-sm font-medium text-amber-700">{pendingPatients.length} pending review</p>
+                  )}
+                  {patientQ && (
+                    <p className="text-xs text-muted-foreground">{filteredPatients.length} result{filteredPatients.length !== 1 ? "s" : ""}</p>
+                  )}
+                  {filteredPatients
+                    .slice()
+                    .sort((a, b) => (a.verificationStatus === "pending" ? -1 : 1) - (b.verificationStatus === "pending" ? -1 : 1))
+                    .map((p) => (
+                      <PatientRow key={p.id} patient={p} onAction={() => {}} />
+                    ))}
+                </>
               )}
-              {patients
-                .slice()
-                .sort((a, b) => (a.verificationStatus === "pending" ? -1 : 1) - (b.verificationStatus === "pending" ? -1 : 1))
-                .map((p) => (
-                  <PatientRow key={p.id} patient={p} onAction={() => {}} />
-                ))}
             </>
           )}
         </TabsContent>
@@ -510,15 +543,35 @@ export default function Admin() {
             </div>
           ) : (
             <>
-              {pendingDrivers.length > 0 && (
-                <p className="text-sm font-medium text-amber-700 mb-1">{pendingDrivers.length} pending review</p>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                <Input
+                  placeholder="Search by name or rego…"
+                  value={driverSearch}
+                  onChange={(e) => setDriverSearch(e.target.value)}
+                  className="pl-9 h-9"
+                />
+              </div>
+              {filteredDrivers.length === 0 ? (
+                <div className="rounded-xl border bg-card p-8 text-center text-muted-foreground">
+                  <p className="font-medium">No drivers match "{driverSearch}"</p>
+                </div>
+              ) : (
+                <>
+                  {!driverQ && pendingDrivers.length > 0 && (
+                    <p className="text-sm font-medium text-amber-700">{pendingDrivers.length} pending review</p>
+                  )}
+                  {driverQ && (
+                    <p className="text-xs text-muted-foreground">{filteredDrivers.length} result{filteredDrivers.length !== 1 ? "s" : ""}</p>
+                  )}
+                  {filteredDrivers
+                    .slice()
+                    .sort((a, b) => (a.verificationStatus === "pending" ? -1 : 1) - (b.verificationStatus === "pending" ? -1 : 1))
+                    .map((d) => (
+                      <DriverRow key={d.id} driver={d} onAction={() => {}} />
+                    ))}
+                </>
               )}
-              {drivers
-                .slice()
-                .sort((a, b) => (a.verificationStatus === "pending" ? -1 : 1) - (b.verificationStatus === "pending" ? -1 : 1))
-                .map((d) => (
-                  <DriverRow key={d.id} driver={d} onAction={() => {}} />
-                ))}
             </>
           )}
         </TabsContent>
