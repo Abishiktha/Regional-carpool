@@ -30,7 +30,7 @@ import {
 import type { MedicalPatient, MedicalDriver, MedicalTransportRequest, NotificationEntry, VerificationAuditLogEntry } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { ShieldCheck, UserCheck, Car, ClipboardList, CheckCircle2, XCircle, MapPin, CalendarDays, Clock, AlertCircle, Bell, ChevronDown, ChevronRight, History, Search, Download, X, NotebookPen, Save } from "lucide-react";
+import { ShieldCheck, UserCheck, Car, ClipboardList, CheckCircle2, XCircle, MapPin, CalendarDays, Clock, AlertCircle, Bell, ChevronDown, ChevronRight, History, Search, Download, X, NotebookPen, Save, Printer } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 function verificationBadge(status: string) {
@@ -279,6 +279,108 @@ function DriverRow({ driver, onAction }: { driver: MedicalDriver; onAction: () =
   );
 }
 
+// ── Print trip sheet ─────────────────────────────────────────────────────────
+
+function printTripSheet(r: MedicalTransportRequest) {
+  const printedAt = new Date().toLocaleString("en-AU", { dateStyle: "full", timeStyle: "short" });
+  const statusLabel = r.status.charAt(0).toUpperCase() + r.status.slice(1);
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Trip Sheet — ${r.patientName} — ${r.tripDate}</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Georgia, serif; font-size: 13px; color: #1a1a1a; padding: 32px 40px; max-width: 720px; margin: 0 auto; }
+  header { display: flex; align-items: flex-start; justify-content: space-between; padding-bottom: 16px; border-bottom: 3px solid #1a1a1a; margin-bottom: 24px; }
+  header .brand { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+  header .brand span { color: #c2410c; }
+  header .meta { text-align: right; font-size: 11px; color: #555; line-height: 1.6; }
+  h2 { font-size: 17px; font-weight: 700; margin-bottom: 12px; padding-bottom: 4px; border-bottom: 1px solid #ddd; }
+  .section { margin-bottom: 22px; }
+  .row { display: flex; gap: 12px; margin-bottom: 6px; }
+  .label { font-weight: 700; min-width: 150px; flex-shrink: 0; color: #444; }
+  .value { color: #1a1a1a; }
+  .badge { display: inline-block; padding: 1px 8px; border-radius: 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; border: 1px solid; }
+  .badge-pending { background: #fef3c7; color: #92400e; border-color: #fbbf24; }
+  .badge-assigned { background: #dbeafe; color: #1e40af; border-color: #93c5fd; }
+  .badge-completed { background: #dcfce7; color: #166534; border-color: #86efac; }
+  .badge-cancelled { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
+  .notes-box { background: #f0f4ff; border: 1px solid #c7d2fe; border-radius: 6px; padding: 10px 14px; font-size: 12px; line-height: 1.6; white-space: pre-wrap; }
+  .notes-label { font-size: 11px; font-weight: 700; color: #4338ca; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .sig-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 32px; }
+  .sig-box { border-top: 1px solid #999; padding-top: 6px; font-size: 11px; color: #666; }
+  footer { margin-top: 36px; padding-top: 12px; border-top: 1px solid #ddd; font-size: 10px; color: #888; display: flex; justify-content: space-between; }
+  @media print { body { padding: 20px 28px; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><span>Regional</span> Carpool</div>
+  <div class="meta">
+    <strong>MEDICAL TRANSPORT TRIP SHEET</strong><br/>
+    Request #${r.id}<br/>
+    Printed: ${printedAt}
+  </div>
+</header>
+
+<div class="section">
+  <h2>Patient</h2>
+  <div class="row"><span class="label">Name</span><span class="value">${r.patientName}</span></div>
+  <div class="row"><span class="label">Status</span><span class="value"><span class="badge badge-${r.status}">${statusLabel}</span></span></div>
+</div>
+
+<div class="section">
+  <h2>Trip Details</h2>
+  <div class="row"><span class="label">Date</span><span class="value">${r.tripDate}</span></div>
+  <div class="row"><span class="label">Pickup time</span><span class="value">${r.tripTime}</span></div>
+  <div class="row"><span class="label">Pickup address</span><span class="value">${r.pickupAddress}, ${r.pickupSuburb}</span></div>
+  <div class="row"><span class="label">Destination</span><span class="value">${r.destinationName}</span></div>
+  <div class="row"><span class="label">Destination address</span><span class="value">${r.destinationAddress}</span></div>
+  ${r.returnTrip ? `<div class="row"><span class="label">Return trip</span><span class="value">Yes${r.returnTime ? ` — depart ${r.returnTime}` : ""}</span></div>` : ""}
+</div>
+
+<div class="section">
+  <h2>Assigned Driver</h2>
+  ${r.assignedDriverName
+    ? `<div class="row"><span class="label">Driver name</span><span class="value">${r.assignedDriverName}</span></div>`
+    : `<div class="row"><span class="value" style="color:#888;font-style:italic;">No driver assigned yet</span></div>`}
+</div>
+
+${r.coordinatorNotes ? `
+<div class="section">
+  <h2>Coordinator Notes</h2>
+  <div class="notes-label">Internal — do not share with patient</div>
+  <div class="notes-box">${r.coordinatorNotes.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>
+</div>` : ""}
+
+${r.notes ? `
+<div class="section">
+  <h2>Patient Notes</h2>
+  <div class="notes-box">${r.notes.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>
+</div>` : ""}
+
+<div class="sig-grid">
+  <div class="sig-box">Driver signature &amp; date</div>
+  <div class="sig-box">Coordinator signature &amp; date</div>
+</div>
+
+<footer>
+  <span>Regional Carpool — Medical Transport Program</span>
+  <span>Trip Sheet printed ${printedAt}</span>
+</footer>
+
+<script>window.onload = function(){ window.print(); };<\/script>
+</body>
+</html>`;
+
+  const win = window.open("", "_blank", "width=800,height=900");
+  if (!win) return;
+  win.document.write(html);
+  win.document.close();
+}
+
 // ── Transport assignment panel ────────────────────────────────────────────────
 
 function TransportRow({ request, approvedDrivers }: { request: MedicalTransportRequest; approvedDrivers: MedicalDriver[] }) {
@@ -405,16 +507,26 @@ function TransportRow({ request, approvedDrivers }: { request: MedicalTransportR
               </div>
             )}
           </div>
-          {request.status === "pending" && (
+          <div className="flex flex-col gap-2 flex-shrink-0">
+            {request.status === "pending" && (
+              <Button
+                size="sm"
+                className="bg-teal-700 hover:bg-teal-800 text-white gap-1"
+                onClick={() => setAssignOpen(true)}
+                data-testid={`btn-assign-driver-${request.id}`}
+              >
+                <Car className="w-4 h-4" /> Assign Driver
+              </Button>
+            )}
             <Button
               size="sm"
-              className="bg-teal-700 hover:bg-teal-800 text-white flex-shrink-0 gap-1"
-              onClick={() => setAssignOpen(true)}
-              data-testid={`btn-assign-driver-${request.id}`}
+              variant="outline"
+              className="gap-1 text-muted-foreground"
+              onClick={() => printTripSheet(request)}
             >
-              <Car className="w-4 h-4" /> Assign Driver
+              <Printer className="w-4 h-4" /> Print sheet
             </Button>
-          )}
+          </div>
         </div>
       </div>
 
