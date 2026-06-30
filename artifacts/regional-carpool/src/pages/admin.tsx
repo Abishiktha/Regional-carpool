@@ -29,7 +29,7 @@ import {
 import type { MedicalPatient, MedicalDriver, MedicalTransportRequest, NotificationEntry, VerificationAuditLogEntry } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { ShieldCheck, UserCheck, Car, ClipboardList, CheckCircle2, XCircle, MapPin, CalendarDays, Clock, AlertCircle, Bell, ChevronDown, ChevronRight, History, Search, Download } from "lucide-react";
+import { ShieldCheck, UserCheck, Car, ClipboardList, CheckCircle2, XCircle, MapPin, CalendarDays, Clock, AlertCircle, Bell, ChevronDown, ChevronRight, History, Search, Download, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 function verificationBadge(status: string) {
@@ -755,64 +755,171 @@ function exportAuditLogCSV(rows: VerificationAuditLogEntry[]) {
   URL.revokeObjectURL(url);
 }
 
+type DatePreset = "all" | "today" | "week" | "month" | "custom";
+
+function getPresetRange(preset: DatePreset): { from: string; to: string } {
+  const now = new Date();
+  const toISO = (d: Date) => d.toISOString().slice(0, 10);
+  const today = toISO(now);
+  if (preset === "today") return { from: today, to: today };
+  if (preset === "week") {
+    const start = new Date(now);
+    start.setDate(now.getDate() - now.getDay());
+    return { from: toISO(start), to: today };
+  }
+  if (preset === "month") {
+    return { from: `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`, to: today };
+  }
+  return { from: "", to: "" };
+}
+
 function AuditLogPanel() {
   const [filterType, setFilterType] = useState<"all" | "patient" | "driver">("all");
   const [filterAction, setFilterAction] = useState<"all" | "approved" | "rejected">("all");
+  const [datePreset, setDatePreset] = useState<DatePreset>("all");
+  const [customFrom, setCustomFrom] = useState("");
+  const [customTo, setCustomTo] = useState("");
   const { data: entries, isLoading } = useListVerificationAuditLog();
+
+  const { from: rangeFrom, to: rangeTo } = datePreset === "custom"
+    ? { from: customFrom, to: customTo }
+    : getPresetRange(datePreset);
+
+  function applyPreset(preset: DatePreset) {
+    setDatePreset(preset);
+    if (preset !== "custom") { setCustomFrom(""); setCustomTo(""); }
+  }
 
   const filtered = (entries ?? []).filter(e => {
     if (filterType !== "all" && e.entityType !== filterType) return false;
     if (filterAction !== "all" && e.action !== filterAction) return false;
+    if (rangeFrom) {
+      const entryDate = e.decidedAt.slice(0, 10);
+      if (entryDate < rangeFrom) return false;
+    }
+    if (rangeTo) {
+      const entryDate = e.decidedAt.slice(0, 10);
+      if (entryDate > rangeTo) return false;
+    }
     return true;
   });
+
+  const hasActiveFilters = filterType !== "all" || filterAction !== "all" || datePreset !== "all";
+
+  function clearAll() {
+    setFilterType("all");
+    setFilterAction("all");
+    setDatePreset("all");
+    setCustomFrom("");
+    setCustomTo("");
+  }
 
   if (isLoading) {
     return <div className="space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-20 w-full rounded-xl" />)}</div>;
   }
 
+  const presetLabels: { value: DatePreset; label: string }[] = [
+    { value: "all", label: "All time" },
+    { value: "today", label: "Today" },
+    { value: "week", label: "This week" },
+    { value: "month", label: "This month" },
+    { value: "custom", label: "Custom…" },
+  ];
+
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-3 items-center">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-medium text-muted-foreground">Type</span>
-          <Select value={filterType} onValueChange={(v) => setFilterType(v as typeof filterType)}>
-            <SelectTrigger className="h-8 text-xs w-28">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              <SelectItem value="patient">Patients</SelectItem>
-              <SelectItem value="driver">Drivers</SelectItem>
-            </SelectContent>
-          </Select>
+      {/* Filter bar */}
+      <div className="rounded-xl border bg-card p-3 space-y-3">
+        <div className="flex flex-wrap gap-2 items-center">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-muted-foreground">Type</span>
+            <Select value={filterType} onValueChange={(v) => setFilterType(v as typeof filterType)}>
+              <SelectTrigger className="h-8 text-xs w-28">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All</SelectItem>
+                <SelectItem value="patient">Patients</SelectItem>
+                <SelectItem value="driver">Drivers</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-muted-foreground">Decision</span>
+            <Select value={filterAction} onValueChange={(v) => setFilterAction(v as typeof filterAction)}>
+              <SelectTrigger className="h-8 text-xs w-28">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All</SelectItem>
+                <SelectItem value="approved">Approved</SelectItem>
+                <SelectItem value="rejected">Rejected</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center gap-2 ml-auto">
+            {hasActiveFilters && (
+              <Button variant="ghost" size="sm" className="h-8 text-xs gap-1 text-muted-foreground" onClick={clearAll}>
+                <X className="w-3 h-3" /> Clear filters
+              </Button>
+            )}
+            <span className="text-xs text-muted-foreground">{filtered.length} entr{filtered.length !== 1 ? "ies" : "y"}</span>
+            {filtered.length > 0 && (
+              <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5" onClick={() => exportAuditLogCSV(filtered)}>
+                <Download className="w-3.5 h-3.5" />
+                Export CSV
+              </Button>
+            )}
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-medium text-muted-foreground">Decision</span>
-          <Select value={filterAction} onValueChange={(v) => setFilterAction(v as typeof filterAction)}>
-            <SelectTrigger className="h-8 text-xs w-28">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              <SelectItem value="approved">Approved</SelectItem>
-              <SelectItem value="rejected">Rejected</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex items-center gap-2 ml-auto">
-          <span className="text-xs text-muted-foreground">{filtered.length} entr{filtered.length !== 1 ? "ies" : "y"}</span>
-          {filtered.length > 0 && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 text-xs gap-1.5"
-              onClick={() => exportAuditLogCSV(filtered)}
+
+        {/* Date presets */}
+        <div className="flex flex-wrap gap-1.5 items-center">
+          <span className="text-xs font-medium text-muted-foreground mr-1">Period</span>
+          {presetLabels.map(p => (
+            <button
+              key={p.value}
+              onClick={() => applyPreset(p.value)}
+              className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                datePreset === p.value
+                  ? "bg-indigo-700 text-white border-indigo-700"
+                  : "bg-background text-muted-foreground border-border hover:bg-muted"
+              }`}
             >
-              <Download className="w-3.5 h-3.5" />
-              Export CSV
-            </Button>
-          )}
+              {p.label}
+            </button>
+          ))}
         </div>
+
+        {/* Custom date inputs */}
+        {datePreset === "custom" && (
+          <div className="flex flex-wrap gap-2 items-center pt-0.5">
+            <span className="text-xs text-muted-foreground">From</span>
+            <input
+              type="date"
+              value={customFrom}
+              max={customTo || undefined}
+              onChange={e => setCustomFrom(e.target.value)}
+              className="h-8 rounded-md border border-input bg-background px-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+            />
+            <span className="text-xs text-muted-foreground">to</span>
+            <input
+              type="date"
+              value={customTo}
+              min={customFrom || undefined}
+              onChange={e => setCustomTo(e.target.value)}
+              className="h-8 rounded-md border border-input bg-background px-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+            />
+            {(customFrom || customTo) && (
+              <button
+                className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-0.5"
+                onClick={() => { setCustomFrom(""); setCustomTo(""); }}
+              >
+                <X className="w-3 h-3" /> Clear dates
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {filtered.length === 0 ? (
