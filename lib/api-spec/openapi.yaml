@@ -579,6 +579,32 @@ paths:
         "400":
           description: Driver not verified or request already assigned
 
+  /medical/transport-requests/{id}/coordinator-notes:
+    patch:
+      operationId: updateCoordinatorNotes
+      tags: [medical-transport]
+      summary: Update coordinator notes on a transport request
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CoordinatorNotesInput"
+      responses:
+        "200":
+          description: Notes updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MedicalTransportRequest"
+        "404":
+          description: Transport request not found
+
   /notifications:
     get:
       operationId: listNotifications
@@ -1054,6 +1080,8 @@ components:
           type: string
         notes:
           type: ["string", "null"]
+        coordinatorNotes:
+          type: ["string", "null"]
         createdAt:
           type: string
 
@@ -1098,6 +1126,12 @@ components:
       properties:
         driverId:
           type: integer
+
+    CoordinatorNotesInput:
+      type: object
+      properties:
+        coordinatorNotes:
+          type: ["string", "null"]
 
     VerificationAuditLogEntry:
       type: object

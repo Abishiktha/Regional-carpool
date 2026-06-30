@@ -28,5 +28,7 @@ export interface MedicalTransportRequest {
   status: string;
   /** @nullable */
   notes?: string | null;
+  /** @nullable */
+  coordinatorNotes?: string | null;
   createdAt: string;
 }

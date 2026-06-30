@@ -469,6 +469,7 @@ export const ListMedicalTransportRequestsResponseItem = zod.object({
   "assignedDriverName": zod.string().nullish(),
   "status": zod.string(),
   "notes": zod.string().nullish(),
+  "coordinatorNotes": zod.string().nullish(),
   "createdAt": zod.string()
 })
 export const ListMedicalTransportRequestsResponse = zod.array(ListMedicalTransportRequestsResponseItem)
@@ -516,6 +517,7 @@ export const GetMedicalTransportRequestResponse = zod.object({
   "assignedDriverName": zod.string().nullish(),
   "status": zod.string(),
   "notes": zod.string().nullish(),
+  "coordinatorNotes": zod.string().nullish(),
   "createdAt": zod.string()
 })
 
@@ -548,6 +550,7 @@ export const CancelMedicalTransportRequestResponse = zod.object({
   "assignedDriverName": zod.string().nullish(),
   "status": zod.string(),
   "notes": zod.string().nullish(),
+  "coordinatorNotes": zod.string().nullish(),
   "createdAt": zod.string()
 })
 
@@ -576,6 +579,7 @@ export const CompleteMedicalTransportRequestResponse = zod.object({
   "assignedDriverName": zod.string().nullish(),
   "status": zod.string(),
   "notes": zod.string().nullish(),
+  "coordinatorNotes": zod.string().nullish(),
   "createdAt": zod.string()
 })
 
@@ -608,6 +612,40 @@ export const AssignMedicalDriverResponse = zod.object({
   "assignedDriverName": zod.string().nullish(),
   "status": zod.string(),
   "notes": zod.string().nullish(),
+  "coordinatorNotes": zod.string().nullish(),
+  "createdAt": zod.string()
+})
+
+
+/**
+ * @summary Update coordinator notes on a transport request
+ */
+export const UpdateCoordinatorNotesParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UpdateCoordinatorNotesBody = zod.object({
+  "coordinatorNotes": zod.string().nullish()
+})
+
+export const UpdateCoordinatorNotesResponse = zod.object({
+  "id": zod.number(),
+  "patientId": zod.number(),
+  "patientName": zod.string(),
+  "appointmentId": zod.number().nullable(),
+  "pickupAddress": zod.string(),
+  "pickupSuburb": zod.string(),
+  "destinationName": zod.string(),
+  "destinationAddress": zod.string(),
+  "tripDate": zod.string(),
+  "tripTime": zod.string(),
+  "returnTrip": zod.boolean().optional(),
+  "returnTime": zod.string().nullish(),
+  "assignedDriverId": zod.number().nullish(),
+  "assignedDriverName": zod.string().nullish(),
+  "status": zod.string(),
+  "notes": zod.string().nullish(),
+  "coordinatorNotes": zod.string().nullish(),
   "createdAt": zod.string()
 })
 

@@ -12,6 +12,7 @@ export * from './bookingInput';
 export * from './cancelTransportInput';
 export * from './carpoolPost';
 export * from './carpoolPostInput';
+export * from './coordinatorNotesInput';
 export * from './healthStatus';
 export * from './listCarpoolPostsParams';
 export * from './listMedicalTransportRequestsParams';

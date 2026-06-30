@@ -231,6 +231,8 @@ export interface MedicalTransportRequest {
   status: string;
   /** @nullable */
   notes?: string | null;
+  /** @nullable */
+  coordinatorNotes?: string | null;
   createdAt: string;
 }
 
@@ -255,6 +257,11 @@ export interface CancelTransportInput {
 
 export interface AssignDriverInput {
   driverId: number;
+}
+
+export interface CoordinatorNotesInput {
+  /** @nullable */
+  coordinatorNotes?: string | null;
 }
 
 export interface VerificationAuditLogEntry {

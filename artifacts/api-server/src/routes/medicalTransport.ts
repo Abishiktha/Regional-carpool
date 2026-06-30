@@ -8,6 +8,8 @@ import {
   GetMedicalTransportRequestParams,
   AssignMedicalDriverParams,
   AssignMedicalDriverBody,
+  UpdateCoordinatorNotesParams,
+  UpdateCoordinatorNotesBody,
 } from "@workspace/api-zod";
 
 const router = Router();
@@ -211,6 +213,28 @@ router.post("/:id/assign", async (req, res) => {
   res.json(fmt(updated));
 });
 
+router.patch("/:id/coordinator-notes", async (req, res) => {
+  const paramsParsed = UpdateCoordinatorNotesParams.safeParse({ id: Number(req.params.id) });
+  if (!paramsParsed.success) { res.status(400).json({ error: "Invalid id" }); return; }
+  const bodyParsed = UpdateCoordinatorNotesBody.safeParse(req.body);
+  if (!bodyParsed.success) { res.status(400).json({ error: "Invalid input" }); return; }
+
+  const [request] = await db
+    .select()
+    .from(medicalTransportRequestsTable)
+    .where(eq(medicalTransportRequestsTable.id, paramsParsed.data.id));
+
+  if (!request) { res.status(404).json({ error: "Transport request not found" }); return; }
+
+  const [updated] = await db
+    .update(medicalTransportRequestsTable)
+    .set({ coordinatorNotes: bodyParsed.data.coordinatorNotes ?? null })
+    .where(eq(medicalTransportRequestsTable.id, request.id))
+    .returning();
+
+  res.json(fmt(updated));
+});
+
 function fmt(r: typeof medicalTransportRequestsTable.$inferSelect) {
   return {
     id: r.id,
@@ -229,6 +253,7 @@ function fmt(r: typeof medicalTransportRequestsTable.$inferSelect) {
     assignedDriverName: r.assignedDriverName ?? null,
     status: r.status,
     notes: r.notes ?? null,
+    coordinatorNotes: r.coordinatorNotes ?? null,
     createdAt: r.createdAt.toISOString(),
   };
 }

@@ -19,6 +19,7 @@ export const medicalTransportRequestsTable = pgTable("medical_transport_requests
   assignedDriverName: text("assigned_driver_name"),
   status: text("status").notNull().default("pending"),
   notes: text("notes"),
+  coordinatorNotes: text("coordinator_notes"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

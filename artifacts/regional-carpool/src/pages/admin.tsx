@@ -20,6 +20,7 @@ import {
   useVerifyMedicalDriver,
   useListMedicalTransportRequests,
   useAssignMedicalDriver,
+  useUpdateCoordinatorNotes,
   useListNotifications,
   useListVerificationAuditLog,
   getListMedicalPatientsQueryKey,
@@ -29,7 +30,7 @@ import {
 import type { MedicalPatient, MedicalDriver, MedicalTransportRequest, NotificationEntry, VerificationAuditLogEntry } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { ShieldCheck, UserCheck, Car, ClipboardList, CheckCircle2, XCircle, MapPin, CalendarDays, Clock, AlertCircle, Bell, ChevronDown, ChevronRight, History, Search, Download, X } from "lucide-react";
+import { ShieldCheck, UserCheck, Car, ClipboardList, CheckCircle2, XCircle, MapPin, CalendarDays, Clock, AlertCircle, Bell, ChevronDown, ChevronRight, History, Search, Download, X, NotebookPen, Save } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 function verificationBadge(status: string) {
@@ -284,8 +285,25 @@ function TransportRow({ request, approvedDrivers }: { request: MedicalTransportR
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const assign = useAssignMedicalDriver();
+  const saveNotes = useUpdateCoordinatorNotes();
   const [selectedDriverId, setSelectedDriverId] = useState<string>("");
   const [assignOpen, setAssignOpen] = useState(false);
+  const [notesOpen, setNotesOpen] = useState(false);
+  const [draftNotes, setDraftNotes] = useState(request.coordinatorNotes ?? "");
+
+  function doSaveNotes() {
+    saveNotes.mutate(
+      { id: request.id, data: { coordinatorNotes: draftNotes.trim() || null } },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: getListMedicalTransportRequestsQueryKey() });
+          toast({ title: "Notes saved", description: "Coordinator notes updated." });
+          setNotesOpen(false);
+        },
+        onError: () => toast({ title: "Save failed", description: "Please try again.", variant: "destructive" }),
+      }
+    );
+  }
 
   function doAssign() {
     if (!selectedDriverId) return;
@@ -334,8 +352,58 @@ function TransportRow({ request, approvedDrivers }: { request: MedicalTransportR
                   Assigned: {request.assignedDriverName}
                 </span>
               )}
-              {request.notes && <span className="sm:col-span-2"><span className="font-medium text-foreground">Notes:</span> {request.notes}</span>}
+              {request.notes && <span className="sm:col-span-2"><span className="font-medium text-foreground">Patient notes:</span> {request.notes}</span>}
             </div>
+
+            {/* Coordinator notes inline editor */}
+            {notesOpen ? (
+              <div className="mt-3 space-y-2">
+                <Textarea
+                  value={draftNotes}
+                  onChange={(e) => setDraftNotes(e.target.value)}
+                  placeholder="e.g. Patient needs extra time to board. Wheelchair in boot."
+                  rows={3}
+                  className="text-sm"
+                />
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    className="h-7 text-xs gap-1 bg-indigo-700 hover:bg-indigo-800 text-white"
+                    onClick={doSaveNotes}
+                    disabled={saveNotes.isPending}
+                  >
+                    <Save className="w-3 h-3" />
+                    {saveNotes.isPending ? "Saving…" : "Save note"}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 text-xs"
+                    onClick={() => { setNotesOpen(false); setDraftNotes(request.coordinatorNotes ?? ""); }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="mt-2 flex items-start gap-2">
+                {request.coordinatorNotes ? (
+                  <div className="flex-1 rounded-md bg-indigo-50 border border-indigo-100 px-3 py-2 text-xs text-indigo-900">
+                    <span className="font-semibold text-indigo-700 flex items-center gap-1 mb-0.5">
+                      <NotebookPen className="w-3 h-3" /> Coordinator note
+                    </span>
+                    {request.coordinatorNotes}
+                  </div>
+                ) : null}
+                <button
+                  onClick={() => setNotesOpen(true)}
+                  className="text-xs text-muted-foreground hover:text-indigo-700 flex items-center gap-1 mt-0.5 flex-shrink-0"
+                >
+                  <NotebookPen className="w-3 h-3" />
+                  {request.coordinatorNotes ? "Edit note" : "Add note"}
+                </button>
+              </div>
+            )}
           </div>
           {request.status === "pending" && (
             <Button

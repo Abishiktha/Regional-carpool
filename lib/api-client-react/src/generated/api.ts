@@ -26,6 +26,7 @@ import type {
   CancelTransportInput,
   CarpoolPost,
   CarpoolPostInput,
+  CoordinatorNotesInput,
   HealthStatus,
   ListCarpoolPostsParams,
   ListMedicalTransportRequestsParams,
@@ -2151,6 +2152,78 @@ export const useAssignMedicalDriver = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getAssignMedicalDriverMutationOptions(options));
+    }
+
+export const getUpdateCoordinatorNotesUrl = (id: number,) => {
+
+
+
+
+  return `/api/medical/transport-requests/${id}/coordinator-notes`
+}
+
+/**
+ * @summary Update coordinator notes on a transport request
+ */
+export const updateCoordinatorNotes = async (id: number,
+    coordinatorNotesInput: CoordinatorNotesInput, options?: RequestInit): Promise<MedicalTransportRequest> => {
+
+  return customFetch<MedicalTransportRequest>(getUpdateCoordinatorNotesUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      coordinatorNotesInput,)
+  }
+);}
+
+
+
+
+export const getUpdateCoordinatorNotesMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCoordinatorNotes>>, TError,{id: number;data: BodyType<CoordinatorNotesInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateCoordinatorNotes>>, TError,{id: number;data: BodyType<CoordinatorNotesInput>}, TContext> => {
+
+const mutationKey = ['updateCoordinatorNotes'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateCoordinatorNotes>>, {id: number;data: BodyType<CoordinatorNotesInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateCoordinatorNotes(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateCoordinatorNotesMutationResult = NonNullable<Awaited<ReturnType<typeof updateCoordinatorNotes>>>
+    export type UpdateCoordinatorNotesMutationBody = BodyType<CoordinatorNotesInput>
+    export type UpdateCoordinatorNotesMutationError = ErrorType<void>
+
+    /**
+ * @summary Update coordinator notes on a transport request
+ */
+export const useUpdateCoordinatorNotes = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCoordinatorNotes>>, TError,{id: number;data: BodyType<CoordinatorNotesInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateCoordinatorNotes>>,
+        TError,
+        {id: number;data: BodyType<CoordinatorNotesInput>},
+        TContext
+      > => {
+      return useMutation(getUpdateCoordinatorNotesMutationOptions(options));
     }
 
 export const getListNotificationsUrl = (params?: ListNotificationsParams,) => {
